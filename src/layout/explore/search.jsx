@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import SearchIcon from "@mui/icons-material/Search";
+import { BsSearch as SearchIcon } from "react-icons/bs";
 import Profileviewbox from "../profile/profileviewbox";
 import { getallprofile } from "../../service/Auth/database";
 import { Link } from "react-router-dom";
@@ -49,44 +49,41 @@ export default function Search({ bio = false }) {
   }, [searchtext, debouncedFetchRelevantUsers]);
 
   return (
-    <section className="p-2 w-full">
-      <div className="w-full">
-        <div className="inline-flex focus:border-blue-800 sm:px-4 align-middle p-1 rounded-full border-gray-800 border-2 w-full justify-between">
-          <i className="m-auto p-2">
-            <SearchIcon />
-          </i>
-          <input
-            type="search"
-            value={searchtext}
-            name="search"
-            onChange={(e) => setsearchtext(e.target.value)}
-            className="p-3 w-full bg-inherit text-white rounded-full outline-none"
-            placeholder="Search.."
-          />
-        </div>
+    <div className="relative mb-4">
+      <div className="relative">
+        <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary text-xl pointer-events-none" />
+        <input
+          type="search"
+          value={searchtext}
+          name="search"
+          onChange={(e) => setsearchtext(e.target.value)}
+          className="w-full bg-bg-tertiary border-0 rounded-full pl-12 pr-4 py-3 text-[15px] text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent-500"
+          placeholder="Search"
+        />
       </div>
 
       {searchtext !== "" && (
-        <div className="bg-black overflow-y-scroll scroll-hidden shadow-zinc-300 shadow-md w-full rounded-xl py-5 max-h-72 flex flex-col space-y-1 z-50">
-          <label className="text-gray-500 p-2 capitalize text-center">
-            Try searching for people using their names or username
-          </label>
-          {relaventusers?.length === 0 && searchtext !== "" && (
-            <Link
-              to={`/profile/${searchtext}`}
-              className="capitalize text-sm sm:text-base text-left mx-3"
-            >
-              try search for{" "}
-              <b className="font-semibold border-b-2"> {searchtext}</b>
-            </Link>
-          )}
-          <div className="flex flex-col w-96 m-auto justify-center space-y-5">
-            {relaventusers?.map((profile, index) => {
-              return <Profileviewbox key={index} profile={profile} bio={bio} />;
-            })}
+        <div className="absolute top-full left-0 right-0 mt-2 bg-bg-tertiary rounded-2xl shadow-large overflow-hidden z-50 max-h-96 overflow-y-auto scroll-hidden border border-border-default">
+          <div className="p-4">
+            {relaventusers?.length === 0 && searchtext !== "" && (
+              <Link
+                to={`/profile/${searchtext}`}
+                className="block px-4 py-3 hover:bg-bg-hover rounded-lg transition-colors"
+              >
+                <span className="text-[15px] text-text-primary">
+                  Search for <span className="font-bold">"{searchtext}"</span>
+                </span>
+              </Link>
+            )}
+            
+            <div>
+              {relaventusers?.map((profile, index) => (
+                <Profileviewbox key={index} profile={profile} bio={bio} />
+              ))}
+            </div>
           </div>
         </div>
       )}
-    </section>
+    </div>
   );
 }

@@ -1,8 +1,8 @@
 import { useState, useEffect, Fragment } from "react";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { MdArrowBack as ArrowBackIcon } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { Post } from "./post";
-import EditIcon from "@mui/icons-material/Edit";
+import { MdEdit as EditIcon } from "react-icons/md";
 import { Popupitem } from "../ui/popup";
 import { useUserdatacontext } from "../service/context/usercontext";
 import {
@@ -11,8 +11,8 @@ import {
   updateprofileuserdata,
 } from "../service/Auth/database";
 import { toast } from "react-toastify";
-import { Skeleton } from "@mui/material";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
+import { Skeleton } from "../ui/skeleton";
+import { MdMoreVert as MoreVertIcon } from "react-icons/md";
 import { Createpost } from "./createpost";
 import Editfuserdata from "../layout/profile/editfuserdata";
 import { auth } from "../service/Auth";
@@ -61,7 +61,25 @@ export const Profile = ({ username }) => {
     if (userdata?.username === profileuserdata?.username) {
       userdata && setprofileuserdata(userdata);
     }
-  }, [userdata]);
+  }, [userdata, profileuserdata?.username]);
+
+  // Listen for post deletions to update profile
+  useEffect(() => {
+    const handlePostDeleted = (event) => {
+      const { postid } = event.detail;
+      if (profileuserdata?.post) {
+        setprofileuserdata((prev) => ({
+          ...prev,
+          post: prev.post.filter((p) => p.postid !== postid),
+        }));
+      }
+    };
+
+    window.addEventListener('postDeleted', handlePostDeleted);
+    return () => {
+      window.removeEventListener('postDeleted', handlePostDeleted);
+    };
+  }, [profileuserdata]);
 
   useEffect(() => {
     const data = async () => {
@@ -128,7 +146,7 @@ export const Profile = ({ username }) => {
   }
 
   return (
-    <div className=" postanimiate post  w-full p-2 sm:text-2xl text-lg capitalize">
+    <div className="  post  w-full p-2 sm:text-2xl text-lg capitalize">
       <div className="flex  relative m-1 sm:m-2 ">
         <i
           onClick={() => {

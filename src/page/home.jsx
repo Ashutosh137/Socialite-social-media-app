@@ -1,4 +1,5 @@
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useState, useCallback } from "react";
+import { motion } from "framer-motion";
 import { getallpost } from "../service/Auth/database";
 import { Createpost } from "../component/createpost";
 import { Post } from "../component/post";
@@ -14,25 +15,72 @@ export const Home = () => {
   const { userdata } = useUserdatacontext();
   const [loading, setloading] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setloading(true);
-      try {
-        const allPosts = await getallpost();
-        const sortedPosts = allPosts.flat().sort(() => Math.random() - 0.5);
-        setallpostdata(sortedPosts);
-        setpost(sortedPosts);
-      } catch (error) {
-        console.error("Error fetching posts:", error);
-      }
-      setloading(false);
-    };
-
-    fetchData();
+  const fetchData = useCallback(async () => {
+    setloading(true);
+    try {
+      const allPosts = await getallpost();
+      const sortedPosts = allPosts.flat().sort((a, b) => {
+        // Sort by date (newest first)
+        const dateA = a.postedat?.toDate?.() || new Date(a.postedat);
+        const dateB = b.postedat?.toDate?.() || new Date(b.postedat);
+        return dateB - dateA;
+      });
+      setallpostdata(sortedPosts);
+      setpost(sortedPosts);
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+    }
+    setloading(false);
   }, []);
 
   useEffect(() => {
-    if (active === "follow" && userdata?.following) {
+    fetchData();
+  }, [fetchData]);
+
+  // Listen for new posts and refresh
+  useEffect(() => {
+    const handlePostCreated = (event) => {
+      const newPost = event.detail;
+      // Optimistically add to top of feed
+      if (newPost && allpostdata) {
+        setallpostdata((prev) => [newPost, ...(prev || [])]);
+        setpost((prev) => {
+          // If filtering by following, check if user follows themselves
+          if (active === "follow" && userdata?.following?.length > 0) {
+            if (userdata.following.includes(newPost.postedby)) {
+              return [newPost, ...(prev || [])];
+            }
+            return prev;
+          }
+          return [newPost, ...(prev || [])];
+        });
+      }
+      // Then refresh from server to ensure consistency
+      setTimeout(() => fetchData(), 500);
+    };
+
+    const handlePostDeleted = (event) => {
+      const { postid } = event.detail;
+      // Optimistically remove from local state
+      setpost((prev) => prev.filter((p) => p.postid !== postid));
+      setallpostdata((prev) => prev?.filter((p) => p.postid !== postid));
+      // Then refresh from server
+      setTimeout(() => fetchData(), 500);
+    };
+
+    window.addEventListener('postCreated', handlePostCreated);
+    window.addEventListener('postDeleted', handlePostDeleted);
+
+    return () => {
+      window.removeEventListener('postCreated', handlePostCreated);
+      window.removeEventListener('postDeleted', handlePostDeleted);
+    };
+  }, [fetchData, allpostdata, active, userdata]);
+
+  useEffect(() => {
+    if (!allpostdata) return;
+    
+    if (active === "follow" && userdata?.following?.length > 0) {
       const filteredPosts = allpostdata.filter((post) =>
         userdata.following.includes(post.postedby),
       );
@@ -43,56 +91,84 @@ export const Home = () => {
   }, [allpostdata, active, userdata]);
 
   const handleTabChange = (tab) => {
-    setpost();
+    setpost([]);
     setactive(tab);
   };
 
   return (
     <Fragment>
       <Helmet>
-        <title>Home | socilaite</title>
-        <meta name="description" content="Home" />
-        <link rel="canonical" href="/Home" />
-        <meta name="robots" content="index, follow" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="keywords" content="Home" />
-        <meta name="author" content="Home" />
-        <meta name="language" content="EN" />
+        <title>Home | Socialite</title>
       </Helmet>
-      <div className="  w-full px-2 ">
-        <div className="sticky bg-inherit/50  z-30 text-neutral-200 capitalize text-base sm:text-lg my-2 top-0 ">
-          <div className="flex  justify-evenly my-2 bg-transparent">
-            <label
-              onClick={() => handleTabChange("")}
-              className={`${
-                active === "" ? "border-sky-500 border-b-2" : ""
-              }  p-1`}
-            >
-              For You
-            </label>
-            <label
-              onClick={() => auth?.currentUser && handleTabChange("follow")}
-              className={`${
-                active === "follow" ? "border-sky-500 border-b-2" : ""
-              }`}
-            >
-              Following
-            </label>
+      
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-20 bg-bg-default/80 backdrop-blur-xl border-b border-border-default">
+       
+        {/* Tabs */}
+        <div className="flex border-b border-border-default">
+          <button
+                onClick={() => handleTabChange("")}
+            className={`flex-1 h-[53px] relative font-semibold text-[15px] transition-colors duration-200 ${
+                  active === ""
+                    ? "text-text-primary"
+                : "text-text-secondary hover:text-text-primary hover:bg-bg-hover"
+                }`}
+              >
+            For you
+                {active === "" && (
+                  <motion.div
+                    layoutId="activeTab"
+                className="absolute bottom-0 left-0 right-0 h-1 bg-accent-500 rounded-full"
+                    initial={false}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                )}
+          </button>
+              {auth?.currentUser && (
+            <button
+                  onClick={() => handleTabChange("follow")}
+              className={`flex-1 h-[53px] relative font-semibold text-[15px] transition-colors duration-200 ${
+                    active === "follow"
+                      ? "text-text-primary"
+                  : "text-text-secondary hover:text-text-primary hover:bg-bg-hover"
+                  }`}
+                >
+                  Following
+                  {active === "follow" && (
+                    <motion.div
+                      layoutId="activeTab"
+                  className="absolute bottom-0 left-0 right-0 h-1 bg-accent-500 rounded-full"
+                      initial={false}
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    />
+                  )}
+            </button>
+              )}
           </div>
         </div>
-        <Createpost />
-        <hr className="border-gray-700 w-full" />
-        <div className=" mx-2 snap-y w-full snap-mandatory">
-          {loading && <Loading />}
-          {post?.length === 0 && !loading && (
-            <div className="flex capitalize items-center w-full h-80 justify-center">
-              no posts yet
+
+      {/* Create Post */}
+        <div className=" t">
+            <Createpost />
+        </div>
+
+        {/* Posts Feed */}
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <Loading />
             </div>
           )}
-          {post?.map((postarray, index) => (
-            <Post key={index} postdata={postarray} popup={true} />
-          ))}
+      
+          {post?.length === 0 && !loading && (
+        <div className="flex flex-col items-center justify-center py-12 px-4">
+          <p className="text-text-secondary text-[15px]">No posts yet</p>
         </div>
+          )}
+
+      <div className=" flex flex-col space-y-1 divide-y divide-border-default">
+            {post?.map((postarray, index) => (
+              <Post key={postarray?.postid || index} postdata={postarray} popup={true} />
+            ))}
       </div>
     </Fragment>
   );

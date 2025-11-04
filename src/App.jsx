@@ -21,55 +21,60 @@ function App() {
   const [userdata, setuserdata] = useState(null);
   return (
     <UserDataProvider value={userdata} setvalue={setuserdata}>
-      <div className=" max-w-screen-xl mx-auto  mt-10 md:mt-5">
-        <ToastContainer
-          position="top-center"
-          autoClose={400}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="light"
-        />
+      <div className="min-h-screen bg-bg-default">
+        <div className="w-full max-w-7xl mx-auto">
+          <ToastContainer
+            position="top-center"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop={true}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="dark"
+            toastClassName="bg-bg-tertiary border border-border-default rounded-xl"
+            progressClassName="bg-accent-500"
+            bodyClassName="text-text-primary font-medium"
+          />
 
-        <Routes>
-          <Route exect path="/" Component={signuppage} />
-          <Route exect path="/login" Component={Loginpage} />
-          <Route path="/home" element={<Layout Component={Home} />} />
-          <Route exect path="/create-account" Component={CreateAccount} />
-          <Route exect path="/search" element={<Layout Component={Search} />} />
-          <Route
-            exect
-            path="/profile/:username"
-            element={<Layout Component={Profilepage} />}
-          />
-          <Route
-            exect
-            path="/profile/:username/:postid"
-            element={<Layout Component={Seepost} />}
-          />
-          {userdata && (
+          <Routes>
+            <Route exact path="/" Component={signuppage} />
+            <Route exact path="/login" Component={Loginpage} />
+            <Route path="/home" element={<Layout Component={Home} />} />
+            <Route exact path="/create-account" Component={CreateAccount} />
+            <Route exact path="/search" element={<Layout Component={Search} />} />
             <Route
-              exect
-              path="/setting"
-              element={<Layout Component={Setting} suggetion={false} />}
+              exact
+              path="/profile/:username"
+              element={<Layout Component={Profilepage} />}
             />
-          )}
-          {userdata && (
             <Route
-              exect
-              path="/notification"
-              element={<Layout Component={Notification} />}
+              exact
+              path="/profile/:username/:postid"
+              element={<Layout Component={Seepost} />}
             />
-          )}
-          {userdata && (
-            <Route exect path="/lists" element={<Layout Component={List} />} />
-          )}
-          <Route path="*" Component={Notfound} />
-        </Routes>
+            {userdata && (
+              <Route
+                exact
+                path="/setting"
+                element={<Layout Component={Setting} suggetion={false} />}
+              />
+            )}
+            {userdata && (
+              <Route
+                exact
+                path="/notification"
+                element={<Layout Component={Notification} />}
+              />
+            )}
+            {userdata && (
+              <Route exact path="/lists" element={<Layout Component={List} />} />
+            )}
+            <Route path="*" Component={Notfound} />
+          </Routes>
+        </div>
       </div>
     </UserDataProvider>
   );

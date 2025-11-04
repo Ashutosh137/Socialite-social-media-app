@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { useUserdatacontext } from "../../service/context/usercontext";
-import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
+import { MdRemoveCircleOutline as RemoveCircleOutlineIcon } from "react-icons/md";
+import { MdPublic as PublicIcon } from "react-icons/md";
+import { MdLock as LockIcon } from "react-icons/md";
 import Profileviewbox from "../profile/profileviewbox";
+import Card from "../../ui/card";
+import Button from "../../ui/button";
 
 export default function Block() {
   const { userdata, setuserdata } = useUserdatacontext();
@@ -17,61 +22,101 @@ export default function Block() {
     data();
   }, [privacy, setuserdata]);
 
+  const isPrivate = privacy == 1;
+
   return (
-    <section className="post text-center p-2 text-sm sm:text-base sm:p-5 capitalize w-full ">
-      <h1 className="font-semibold text-xl">who can see your content</h1>
-      <div className="my-8">
-        <div className="flex justify-between">
-          <label>account privacy</label>
-          <input
-            type="range"
-            className="w-8 text-blue-500"
-            value={privacy}
-            onChange={(e) => {
-              setprivacy(e.target.value);
-            }}
-            max={1}
-            min={0}
-            slot={2}
-            name="privacy"
-          />
+    <section className="w-full flex flex-col gap-6">
+      <h1 className="text-2xl font-bold text-text-primary mb-2">
+        Who Can See Your Content
+      </h1>
+
+      {/* Privacy Toggle */}
+      <Card variant="elevated" padding="lg" className="w-full">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {isPrivate ? (
+                <LockIcon className="text-xl text-accent-500" />
+              ) : (
+                <PublicIcon className="text-xl text-text-secondary" />
+              )}
+              <label className="text-[15px] font-semibold text-text-primary">
+                Account Privacy
+              </label>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-text-secondary">
+                {isPrivate ? "Private" : "Public"}
+              </span>
+              <input
+                type="range"
+                className="w-20 accent-accent-500"
+                value={privacy}
+                onChange={(e) => {
+                  setprivacy(e.target.value);
+                }}
+                max={1}
+                min={0}
+                step={1}
+                name="privacy"
+              />
+            </div>
+          </div>
+          <p className="text-sm text-text-secondary leading-relaxed">
+            When your account is public, your profile and posts can be seen by
+            anyone, on or off Socialite, even if they don't have a Socialite
+            account.
+          </p>
         </div>
-        <p className="text-xs my-4  px-3 text-gray-300 w-full text-left">
-          When your account is public, your profile and posts can be seen by
-          anyone, on or off socialite, even if they don't have an socialite
-          account.
-        </p>
-      </div>
-      <div className="text-left flex flex-col my-10">
-        <label>
-          blocked accounts{" "}
-          <span className="font-semibold">( {userdata?.block?.length} )</span>
-        </label>
-        {userdata?.block?.length > 0 && (
-          <div className="flex flex-col my-5 justify-between">
-            <h1 className="text-lg m-auto">blocked account list </h1>
+      </Card>
+
+      {/* Blocked Accounts */}
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-2">
+          <h2 className="text-xl font-bold text-text-primary">
+            Blocked Accounts
+          </h2>
+          <span className="text-[15px] text-text-secondary font-semibold">
+            ({userdata?.block?.length || 0})
+          </span>
+        </div>
+
+        {userdata?.block?.length > 0 ? (
+          <div className="flex flex-col gap-3">
             {userdata?.block?.map((profile, index) => {
               return (
-                <div
+                <motion.div
                   key={index}
-                  className="flex w-96 mx-auto space-x-2 justify-around "
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="flex items-center justify-between px-4 py-3 rounded-xl bg-bg-tertiary border border-border-default hover:bg-bg-elevated transition-colors"
                 >
-                  <Profileviewbox profileusername={profile} />
-                  <i
-                    className="my-auto"
+                  <div className="flex-1">
+                    <Profileviewbox profileusername={profile} />
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                     onClick={() => {
                       setuserdata((prev) => ({
                         ...prev,
-                        block: prev.block.splice(index, 1),
+                        block: prev.block.filter((_, i) => i !== index),
                       }));
                     }}
+                    className="p-2 rounded-full hover:bg-status-error/10 text-status-error hover:text-status-error transition-colors"
                   >
-                    <RemoveCircleOutlineIcon />
-                  </i>
-                </div>
+                    <RemoveCircleOutlineIcon className="text-xl" />
+                  </motion.button>
+                </motion.div>
               );
             })}
           </div>
+        ) : (
+          <Card variant="outline" padding="md" className="text-center">
+            <p className="text-text-secondary text-[15px]">
+              No blocked accounts
+            </p>
+          </Card>
         )}
       </div>
     </section>

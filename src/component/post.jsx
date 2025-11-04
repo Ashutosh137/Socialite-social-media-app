@@ -1,16 +1,18 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { auth } from "../service/Auth";
-import InsertCommentIcon from "@mui/icons-material/InsertComment";
-import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
-import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import BookmarkIcon from "@mui/icons-material/Bookmark";
-import BarChartIcon from "@mui/icons-material/BarChart";
-import FavoriteIcon from "@mui/icons-material/Favorite";
-import { Skeleton } from "@mui/material";
+import { MdComment as CommentIcon } from "react-icons/md";
+import { MdFavoriteBorder as LikeIcon } from "react-icons/md";
+import { MdFavorite as LikedIcon } from "react-icons/md";
+import { MdBookmarkBorder as BookmarkIcon } from "react-icons/md";
+import { MdBookmark as BookmarkedIcon } from "react-icons/md";
+import { MdBarChart as ViewsIcon } from "react-icons/md";
+import { MdMoreVert as MoreIcon } from "react-icons/md";
+import { MdShare as ShareIcon } from "react-icons/md";
+import { Skeleton } from "../ui/skeleton";
 import { Popupitem } from "../ui/popup";
+import Avatar from "../ui/avatar";
+import ActionButton from "../ui/action-button";
 import Linkify from "linkify-react";
-import ShareIcon from "@mui/icons-material/Share";
 import { useUserdatacontext } from "../service/context/usercontext";
 import {
   Create_notification,
@@ -33,9 +35,7 @@ export const Post = ({ postdata, popup = true }) => {
   const [active, setactive] = useState("");
   const [post, setpost] = useState(postdata || null);
   const [hide, sethide] = useState(false);
-
   const [postedby, setpostedby] = useState(null);
-
   const [loadingimg, setloadingimg] = useState(true);
   const navigate = useNavigate();
 
@@ -44,18 +44,34 @@ export const Post = ({ postdata, popup = true }) => {
       const postedby = await get_userdata(post?.postedby);
       setpostedby(postedby);
     };
-
     data();
   }, [post]);
+
+  // Debounce post updates to prevent excessive database calls
+  const updatePostDebounced = useCallback(async () => {
+    if (post && postedby?.uid) {
+      try {
+        await updatepost(post, postedby.uid);
+      } catch (error) {
+        console.error("Error updating post:", error);
+      }
+    }
+  }, [post, postedby?.uid]);
+
+  const postUpdateRef = useRef(false);
 
   useEffect(() => {
-    const data = async () => {
-      if (post) {
-        await updatepost(post, postedby?.uid);
-      }
-    };
-    data();
-  }, [post]);
+    // Only update if post actually changed (not on initial mount)
+    if (post && postedby?.uid && postUpdateRef.current) {
+      const timeoutId = setTimeout(() => {
+        updatePostDebounced();
+      }, 1000); // Debounce by 1 second
+
+      return () => clearTimeout(timeoutId);
+    } else {
+      postUpdateRef.current = true;
+    }
+  }, [post, postedby?.uid, updatePostDebounced]);
 
   const handleLike = useCallback(async () => {
     if (!auth?.currentUser) {
@@ -63,27 +79,27 @@ export const Post = ({ postdata, popup = true }) => {
       return;
     }
 
-    if (post?.likes.includes(userdata?.uid)) {
-      setpost((prev) => ({
-        ...prev,
-        likes: prev.likes.filter((e) => e !== userdata?.uid),
-      }));
-    } else {
-      setpost((prev) => ({
-        ...prev,
-        likes: [...prev.likes, userdata?.uid],
-      }));
-    }
+    const wasLiked = post?.likes.includes(userdata?.uid);
+    
+    // Optimistically update UI
+    setpost((prev) => ({
+      ...prev,
+      likes: wasLiked
+        ? prev.likes.filter((e) => e !== userdata?.uid)
+        : [...prev.likes, userdata?.uid],
+    }));
 
-    if (
-      !post?.likes.includes(userdata?.uid) &&
-      postedby?.username !== userdata?.username
-    ) {
-      await Create_notification(post?.postedby, {
-        likeby: userdata?.uid,
-        type: "postlike",
-        postid: post?.postid,
-      });
+    // Send notification if liking (not unliking)
+    if (!wasLiked && postedby?.username !== userdata?.username) {
+      try {
+        await Create_notification(post?.postedby, {
+          likeby: userdata?.uid,
+          type: "postlike",
+          postid: post?.postid,
+        });
+      } catch (error) {
+        console.error("Error creating notification:", error);
+      }
     }
   }, [auth, post, userdata, postedby]);
 
@@ -91,201 +107,211 @@ export const Post = ({ postdata, popup = true }) => {
     active === act ? setactive("") : setactive(act);
   }
 
+  // Track views only once per session
   useEffect(() => {
-    setpost((prev) => ({ ...prev, views: prev.views + 1 }));
-  }, []);
+    const viewKey = `viewed_${post?.postid}`;
+    if (post?.postid && !sessionStorage.getItem(viewKey)) {
+      sessionStorage.setItem(viewKey, 'true');
+      setpost((prev) => ({ ...prev, views: (prev.views || 0) + 1 }));
+    }
+  }, [post?.postid]);
 
   if (postedby?.block?.includes(userdata?.uid)) {
     return <></>;
   }
 
+  if (hide) {
+    return <HidePost setactive={setactive} sethide={sethide} />;
+  }
+
+  const isLiked = post?.likes?.includes(userdata?.uid);
+  const isBookmarked = userdata?.saved?.some(
+    (savedpost) => post?.postid === savedpost?.postid,
+  );
+
   return (
-    <section className="md:my-4  snap-center border-b-2 border-gray-700 w-full  post my-2 pb-3 p-1 text-lg flex flex-col">
-      {!hide && (
-        <div className="flex  space-x-2 w-full   ">
-          <img
-            className="rounded-full border border-neutral-500 w-8 aspect-square sm:w-10 h-8 sm:h-10"
-            src={postedby?.profileImageURL || defaultprofileimage}
-            onError={(e) => {
-              e.target.src = defaultprofileimage;
-            }}
-          />
-          <div className="flex w-full overflow-hidden m-1 sm:mx-3 flex-col ">
-            <div className="flex w-full relative text-sm sm:text-base align-middle">
-              <div
-                onClick={() => {
-                  navigate(`/profile/${postedby?.username}`);
-                }}
-                className="flex text-sm sm:text-base justify-start w-full capitalize space-x-2 sm:space-x-3"
-              >
-                <label className="font-semibold overflow my-auto">
-                  {postedby?.name || (
-                    <Skeleton
-                      animation="wave"
-                      sx={{ bgcolor: "grey.900" }}
-                      variant="text"
-                      width={window.innerWidth >= 400 ? 200 : 100}
-                    />
-                  )}
-                </label>
-                <label className="text-gray-500 flex my-auto overflow space-x-3">
-                  @
-                  {postedby?.username || (
-                    <Skeleton
-                      animation="wave"
-                      sx={{ bgcolor: "grey.900" }}
-                      variant="text"
-                      width={window.innerWidth >= 400 ? 200 : 100}
-                    />
-                  )}
-                </label>
-                <label className="text-gray-500 text-xs m-auto sm:text-sm ">
-                  {Time(post?.postedat?.toJSON().seconds)}
-                </label>
-              </div>
-              <div
-                onClick={() => {
-                  active === "menu" ? setactive("") : setactive("menu");
-                }}
-                className="ml-auto"
-              >
-                <i>
-                  <MoreVertIcon />
-                </i>
-              </div>
-              {active === "menu" && (
-                <PostMenu
-                  post={post}
-                  setactive={setactive}
-                  popup={popup}
-                  handlesave={handlesave}
-                  postedby={postedby}
-                  sethide={sethide}
+    <article
+      className="py-3 border-border-default hover:bg-bg-hover/30 transition-colors duration-150 cursor-pointer"
+      onClick={() => navigate(`/profile/${postedby?.username}/${post?.postid}`)}
+    >
+      <div className="flex gap-3 px-4 py-3 w-full">
+        {/* Avatar */}
+        <Avatar
+          src={postedby?.profileImageURL}
+          alt={postedby?.name || "Profile"}
+          size="md"
+          fallback={defaultprofileimage}
+          onClick={(e) => {
+            e?.stopPropagation?.();
+            navigate(`/profile/${postedby?.username}`);
+          }}
+        />
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          {/* Header */}
+          <div className="flex items-start gap-2 mb-1">
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/profile/${postedby?.username}`);
+              }}
+              className="flex items-center gap-1 cursor-pointer group"
+            >
+              {postedby?.name ? (
+                <>
+                  <span className="font-bold text-[15px] text-text-primary hover:underline">
+                    {postedby.name}
+                  </span>
+                  <span className="text-[15px] text-text-secondary">
+                    @{postedby.username}
+                  </span>
+                  <span className="text-[15px] text-text-secondary">·</span>
+                  <span className="text-[15px] text-text-secondary hover:underline">
+                    {Time(post?.postedat?.toJSON().seconds)}
+                  </span>
+                </>
+              ) : (
+                <Skeleton
+                  animation="wave"
+                  sx={{ bgcolor: "grey.900" }}
+                  variant="text"
+                  width={200}
+                  height={20}
                 />
               )}
             </div>
 
-            {post?.content && (
-              <p
-                className="text-sm w-auto text-clip text-justify break-words block whitespace-pre-wrap pt-3 sm:pt-4 cursor-pointer"
-                role="button"
-                tabIndex={0}
-                onClick={() => {
-                  navigate(`/profile/${postedby?.username}/${post?.postid}`);
-                }}
-              >
-                <Linkify>{post?.content}</Linkify>
-              </p>
-            )}
-
-            {loadingimg && post?.img && (
-              <Skeleton
-                animation="wave"
-                sx={{ bgcolor: "grey.900", borderRadius: "1rem", my: 3 }}
-                variant="rectangular"
-                width={{ xs: 250, md: 500 }}
-                height={{ xs: 300, md: 550 }}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                active === "menu" ? setactive("") : setactive("menu");
+              }}
+              className="ml-auto p-2 rounded-full hover:bg-accent-500/10 text-text-secondary hover:text-accent-500 transition-colors"
+            >
+              <MoreIcon className="text-xl" />
+            </button>
+            
+            {active === "menu" && (
+              <PostMenu
+                post={post}
+                setactive={setactive}
+                popup={popup}
+                handlesave={handlesave}
+                postedby={postedby}
+                sethide={sethide}
               />
             )}
-            {post?.img && (
+          </div>
+
+          {/* Post Content */}
+          {post?.content && (
+            <p
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/profile/${postedby?.username}/${post?.postid}`);
+              }}
+              className="text-[15px] text-text-primary leading-5 mb-3 whitespace-pre-wrap break-words"
+            >
+              <Linkify>{post.content}</Linkify>
+            </p>
+          )}
+
+          {/* Image */}
+          {post?.img && (
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/profile/${postedby?.username}/${post?.postid}`);
+              }}
+              className="rounded-2xl overflow-hidden border border-border-default mb-3 cursor-pointer"
+            >
+              {loadingimg && (
+                <Skeleton
+                  animation="wave"
+                  sx={{ bgcolor: "grey.900", borderRadius: "1rem" }}
+                  variant="rectangular"
+                  width="100%"
+                  height={400}
+                />
+              )}
               <img
-                onDoubleClick={handleLike}
-                onLoadCapture={() => {
-                  setloadingimg(false);
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  handleLike();
                 }}
-                src={post?.img}
-                onClick={() => {
-                  navigate(`/profile/${postedby?.username}/${post?.postid}`);
-                }}
+                onLoad={() => setloadingimg(false)}
+                src={post.img}
                 className={`${
-                  loadingimg ? "hidden" : "block mt-5"
-                } w-full  h-full max-w-[30rem] max-h-[35rem]  object-cover my-2 border-neutral-500 border rounded-xl sm:rounded-2xl`}
+                  loadingimg ? "hidden" : "block"
+                } w-full max-h-[510px] object-cover`}
+                alt="Post"
               />
-            )}
-
-            <div className="flex text-lg mt-5 text-gray-400 space-x-3 m-2 justify-between px-2 sm:px-5">
-              <div className="flex align-middle w-full text-sm sm:text-base justify-between space-x-2">
-                <div
-                  className="flex space-x-1 hover:text-[#464bf0]"
-                  onClick={() => {
-                    popup && handelactive("comment");
-                  }}
-                >
-                  <label className="text-gray-500 font-serif">
-                    {post?.comments?.length > 0 ? post?.comments?.length : ""}
-                  </label>
-                  <i className="">
-                    <InsertCommentIcon />
-                  </i>
-                </div>
-                <div className="flex text-gray-500 align-middle space-x-1   ">
-                  {post?.likes?.length > 0 && (
-                    <label
-                      onClick={() => {
-                        setactive("like");
-                      }}
-                      className=" my-auto font-serif"
-                    >
-                      {post?.likes?.length}
-                    </label>
-                  )}
-                  <i
-                    onClick={() => {
-                      handleLike();
-                    }}
-                    className="hover:text-red-900 drop-shadow"
-                  >
-                    {post?.likes?.includes(userdata?.uid) ? (
-                      <FavoriteIcon style={{ color: "rgb(249, 24, 128)" }} />
-                    ) : (
-                      <FavoriteBorderIcon />
-                    )}
-                  </i>
-                </div>
-                <div className="flex text-gray-500 align-middle space-x-1">
-                  <label className="my-auto text-sm">
-                    {formatNumber(post?.views)}
-                  </label>
-                  <i className="hover:text-blue-900 drop-shadow">
-                    <BarChartIcon />
-                  </i>
-                </div>
-                <i
-                  className="hover:text-green-400"
-                  onClick={() => {
-                    navigator.share({
-                      title: `Spreading the Vibes: Check Out My Latest Socialite Post! @${postedby?.username}`,
-                      text: "Embark on a journey through elegance and excitement! My newest post on Socialite App is here to dazzle your feed. Swipe up to experience the glitz, glamour, and all things fabulous!",
-                      url: `${window.location.origin}/profile/${postedby?.username}/${post?.postid}`,
-                    });
-                  }}
-                >
-                  <ShareIcon />
-                </i>
-              </div>
-
-              <i
-                onClick={() => {
-                  handlesave(post);
-                }}
-                className="hover:text-[#27cbf0]"
-              >
-                {userdata?.saved?.some(
-                  (savedpost) => post?.postid === savedpost?.postid,
-                ) ? (
-                  <BookmarkIcon style={{ color: "#37cbf0" }} />
-                ) : (
-                  <BookmarkBorderIcon />
-                )}
-              </i>
             </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex items-center justify-between max-w-[425px] mt-1">
+            <ActionButton
+              icon={CommentIcon}
+              label="Comment"
+              variant="comment"
+              count={post?.comments?.length || 0}
+              onClick={(e) => {
+                e.stopPropagation();
+                popup && handelactive("comment");
+              }}
+            />
+
+            <ActionButton
+              icon={isLiked ? LikedIcon : LikeIcon}
+              label="Like"
+              variant="like"
+              count={post?.likes?.length || 0}
+              isActive={isLiked}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleLike();
+              }}
+            />
+
+            <ActionButton
+              icon={ShareIcon}
+              label="Share"
+              variant="share"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigator.share({
+                  title: `Check out this post by @${postedby?.username}`,
+                  text: post?.content,
+                  url: `${window.location.origin}/profile/${postedby?.username}/${post?.postid}`,
+                });
+              }}
+            />
+
+            <ActionButton
+              icon={isBookmarked ? BookmarkedIcon : BookmarkIcon}
+              label="Bookmark"
+              variant="bookmark"
+              isActive={isBookmarked}
+              onClick={(e) => {
+                e.stopPropagation();
+                handlesave(post);
+              }}
+            />
+
+            <ActionButton
+              icon={ViewsIcon}
+              label="Views"
+              variant="default"
+              count={post?.views > 0 ? formatNumber(post.views) : ""}
+              onClick={(e) => e.stopPropagation()}
+            />
           </div>
         </div>
-      )}
+      </div>
 
-      {hide && <HidePost setactive={setactive} sethide={sethide} />}
       {active === "like" && <LikePost post={post} setactive={setactive} />}
-
       {active === "delete" && (
         <DeletePost
           delete_post={delete_post}
@@ -293,7 +319,6 @@ export const Post = ({ postdata, popup = true }) => {
           setactive={setactive}
         />
       )}
-
       {active === "report" && <Report setactive={setactive} />}
 
       {popup && (
@@ -310,6 +335,6 @@ export const Post = ({ postdata, popup = true }) => {
           )}
         </>
       )}
-    </section>
+    </article>
   );
 };

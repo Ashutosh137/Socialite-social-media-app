@@ -1,6 +1,8 @@
 import React, { Fragment } from "react";
+import { motion } from "framer-motion";
 import Suggestion from "./../component/suggestion";
 import { Helmet } from "react-helmet";
+
 export default function Search() {
   return (
     <Fragment>
@@ -14,9 +16,14 @@ export default function Search() {
         <meta name="author" content="Explore" />
         <meta name="language" content="EN" />
       </Helmet>
-      <div className="w-full sm:px-10 pb-20">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="w-full px-4 sm:px-6 lg:px-8 pb-20"
+      >
         <Suggestion bio={true} />
-      </div>
+      </motion.div>
     </Fragment>
   );
 }

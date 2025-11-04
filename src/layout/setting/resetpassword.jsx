@@ -1,84 +1,147 @@
 import React from "react";
+import { motion } from "framer-motion";
 import { sendEmailVerification, sendPasswordResetEmail } from "firebase/auth";
 import { toast } from "react-toastify";
 import { auth } from "../../service/Auth";
+import { MdVerified as VerifiedIcon } from "react-icons/md";
+import { MdEmail as EmailIcon } from "react-icons/md";
+import { Input } from "../../ui/input";
+import Button from "../../ui/button";
+import Card from "../../ui/card";
 
 export default function Resetpassword({ toggle }) {
-  const handelvarify = () => {
-    !auth.currentUser.emailVerified &&
-      sendEmailVerification(auth.currentUser) &&
+  const handelvarify = async () => {
+    if (!auth.currentUser.emailVerified) {
+      try {
+        await sendEmailVerification(auth.currentUser);
+        toast.success(
+          "Verification link sent to your email address. Please check your inbox.",
+        );
+      } catch (error) {
+        toast.error("Failed to send verification email");
+      }
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    try {
+      await sendPasswordResetEmail(auth, auth.currentUser.email);
       toast.success(
-        "Sending a varification link to your email address , please check your email ",
+        "Password reset link sent to your email address. Please check your inbox.",
       );
+    } catch (error) {
+      toast.error("Failed to send password reset email");
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   return (
-    <section className="text-sm post sm:text-base sm:p-5 px-2 w-full capitalize flex flex-col space-y-4 text-left">
-      <h1 className="text-2xl text-center p-2">reset your passward</h1>
-      <div className="flex mx-2  justify-around">
-        <label>email address </label>
-        <div className="flex flex-col">
-          <input
+    <section className="w-full flex flex-col gap-6">
+      <h1 className="text-2xl font-bold text-text-primary mb-2">
+        Password and Protection
+      </h1>
+
+      {/* Email Verification */}
+      <Card variant="elevated" padding="lg" className="w-full">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-2 mb-2">
+            <EmailIcon className="text-xl text-accent-500" />
+            <h2 className="text-lg font-semibold text-text-primary">
+              Email Address
+            </h2>
+          </div>
+
+          <Input
             type="email"
             name="email"
-            className={`px-5 bg-black sm:w-80 w-full border-2   text-gray-300 sm:text-base text-sm p-1 border-1 rounded-xl ${
-              auth.currentUser.emailVerified
-                ? "border-green-400"
-                : "border-gray-500"
-            }`}
-            contentEditable={false}
+            label="Email"
             value={auth?.currentUser.email}
+            className={`${
+              auth.currentUser.emailVerified
+                ? "border-status-success"
+                : "border-border-default"
+            }`}
+            disabled
           />
-          {!auth.currentUser.emailVerified && (
-            <button
+
+          {auth.currentUser.emailVerified ? (
+            <div className="flex items-center gap-2 text-status-success">
+              <VerifiedIcon className="text-xl" />
+              <span className="text-sm font-medium">Email verified</span>
+            </div>
+          ) : (
+            <Button
               onClick={handelvarify}
-              className={` rounded-full w-40 p-1 text-gray-300 shadow-lg
-          capitalize px-5 my-3 bg-gray-700`}
+              variant="secondary"
+              size="sm"
+              className="w-full sm:w-auto"
             >
-              verify now
-            </button>
+              Verify Email
+            </Button>
           )}
         </div>
-      </div>
+      </Card>
 
-      <div className="flex  w-full justify-around ">
-        <h1 className=" w-40  my-auto">change your socilite password</h1>
-        <button
-          className="rounded-full bg-blue-500 text-gray-200 p-1 shadow-lg
-          capitalize px-5 my-3"
-          onClick={async () => {
-            await sendPasswordResetEmail(auth, auth.currentUser.email);
-            toast.success(
-              "sended a reset password link to  your email address , please check your email ",
-            );
-          }}
-        >
-          send link via email
-        </button>
-      </div>
+      {/* Password Reset */}
+      <Card variant="elevated" padding="lg" className="w-full">
+        <div className="flex flex-col gap-4">
+          <h2 className="text-lg font-semibold text-text-primary">
+            Change Password
+          </h2>
+          <p className="text-sm text-text-secondary">
+            Send a password reset link to your email address to change your
+            Socialite password.
+          </p>
+          <Button
+            onClick={handlePasswordReset}
+            variant="primary"
+            className="w-full sm:w-auto"
+          >
+            Send Reset Link via Email
+          </Button>
+        </div>
+      </Card>
 
-      <div className="flex justify-around">
-        <label className="w-40 ">last sign-in time</label>
-        <label className="text-gray-400">
-          {auth.currentUser.metadata.lastSignInTime.toString()}
-        </label>
-      </div>
-      <div className="flex  justify-around">
-        <label className="w-40">Created at </label>
-        <label className="text-gray-400">
-          {auth.currentUser.metadata.creationTime.toString()}
-        </label>
-      </div>
+      {/* Account Information */}
+      <Card variant="elevated" padding="lg" className="w-full">
+        <h2 className="text-lg font-semibold text-text-primary mb-4">
+          Account Information
+        </h2>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <span className="text-[15px] text-text-secondary font-medium">
+              Last Sign-In
+            </span>
+            <span className="text-[15px] text-text-primary">
+              {formatDate(auth.currentUser.metadata.lastSignInTime)}
+            </span>
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <span className="text-[15px] text-text-secondary font-medium">
+              Account Created
+            </span>
+            <span className="text-[15px] text-text-primary">
+              {formatDate(auth.currentUser.metadata.creationTime)}
+            </span>
+          </div>
+        </div>
+      </Card>
 
-      <div className="w-full flex">
-        <button
-          onClick={toggle}
-          className="rounded-full bg-blue-500 text-gray-200 p-1 shadow-lg
-          capitalize px-5 my-5 m-auto w-40"
-        >
-          back
-        </button>
-      </div>
+      {/* Back Button */}
+      <Button onClick={toggle} variant="secondary" className="w-full sm:w-auto">
+        Back
+      </Button>
     </section>
   );
 }

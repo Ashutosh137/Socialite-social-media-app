@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useUserdatacontext } from "../../service/context/usercontext";
 import ProgressBar from "@badrap/bar-of-progress";
-import LinkedCameraIcon from "@mui/icons-material/LinkedCamera";
+import { MdLinkedCamera as LinkedCameraIcon } from "react-icons/md";
 import { toast } from "react-toastify";
 import {
   Getimagedownloadlink,

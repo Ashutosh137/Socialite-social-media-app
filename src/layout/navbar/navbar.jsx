@@ -1,24 +1,26 @@
-import { useState, useEffect, Fragment } from "react";
-import CottageIcon from "@mui/icons-material/Cottage";
-import SearchIcon from "@mui/icons-material/Search";
-import NotificationsIcon from "@mui/icons-material/Notifications";
-import PersonIcon from "@mui/icons-material/Person";
-import BookmarksIcon from "@mui/icons-material/Bookmarks";
-import AddIcon from "@mui/icons-material/Add";
-import LogoutIcon from "@mui/icons-material/Logout";
-import LoginIcon from "@mui/icons-material/Login";
-import SettingsIcon from "@mui/icons-material/Settings";
+import { useState, useEffect, Fragment, useMemo } from "react";
+import { useLocation } from "react-router-dom";
+import { AiFillHome as HomeIcon } from "react-icons/ai";
+import { BsSearch as SearchIcon } from "react-icons/bs";
+import { MdNotifications as NotificationsIcon } from "react-icons/md";
+import { MdPerson as PersonIcon } from "react-icons/md";
+import { MdBookmarks as BookmarksIcon } from "react-icons/md";
 import { Link } from "react-router-dom";
 import { useUserdatacontext } from "../../service/context/usercontext";
 import { auth } from "../../service/Auth";
 import { useNavigate } from "react-router-dom";
 import { Popupitem } from "../../ui/popup";
 import { Createpost } from "../../component/createpost";
-import Button from "../../ui/button";
 import Mobilenavbar from "./mobile-navbar";
+import Button from "../../ui/button";
+import Avatar from "../../ui/avatar";
+import Badge from "../../ui/badge";
+import { CiSettings } from "react-icons/ci";
+
 const Navbar = () => {
   const navigate = useNavigate();
-  const { userdata, userNotifications } = useUserdatacontext();
+  const location = useLocation();
+  const { userdata, userNotifications, defaultprofileimage } = useUserdatacontext();
   const [post, setpost] = useState(false);
   const [navbar, setnavbar] = useState(true);
 
@@ -27,119 +29,131 @@ const Navbar = () => {
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollPos = window.scrollY;
-      setnavbar(prevScrollPos > currentScrollPos);
+      setnavbar(prevScrollPos > currentScrollPos || currentScrollPos < 10);
       setPrevScrollPos(currentScrollPos);
     };
 
     window.addEventListener("scroll", handleScroll);
-
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
   }, [prevScrollPos]);
 
+  const navItemsDesktop = useMemo(() => [
+    { icon: HomeIcon, label: "Home", path: "/home", id: "home" },
+    { icon: SearchIcon, label: "Explore", path: userdata?.username ? "/search" : "/login", id: "explore" },
+    { icon: NotificationsIcon, label: "Notifications", path: userdata?.username ? "/notification" : "/login", id: "notifications", badge: userNotifications?.length > userdata?.notification ? userNotifications.length - userdata.notification : null },
+    { icon: BookmarksIcon, label: "Lists", path: userdata?.username ? "/lists" : "/login", id: "lists" },
+    { icon: PersonIcon, label: "Profile", path: userdata?.username ? `/profile/${userdata.username}` : "/login", id: "profile" },
+    { icon: CiSettings, label: "Settings", path: userdata?.username ? "/setting" : "/login", id: "settings" },
+  ], [userdata?.username, userNotifications, userdata?.notification]);
+
+  const isActive = (path) => {
+    if (path === "/home") return location.pathname === "/home";
+    return location.pathname.startsWith(path);
+  };
   return (
     <Fragment>
-      <header className="p-2 hidden  md:block">
-        <nav className="fixed border-r border-gray-300 flex md:w-36 xl:w-56 flex-col h-screen   ">
-          <h1 className="text-3xl text-center title py-5  first-letter:text-5xl font-bold ">
-            Socialite
-          </h1>
-          <nav className="flex align-middle my-auto text-xl justify-center capitalize flex-col">
+      {/* Desktop Navbar - Sticky */}
+      <header className="sticky top-0 hidden md:flex  h-screen w-[275px] flex-col z-40">
+        <nav className="flex flex-col h-full px-3">
+          {/* Logo */}
+          <div className="px-3 py-3 mb-4">
             <Link to="/home">
-              <span className="flex hover:bg-gray-700  p-3 px-5 m-auto rounded-full justify-center xl:justify-start">
-                <CottageIcon />
-                <label className=" mx-2 xl:block hidden">home</label>
-              </span>
+              <div className="w-12 h-12 flex items-center justify-center rounded-full hover:bg-bg-hover transition-colors duration-200 cursor-pointer">
+                <span className="text-2xl font-bold text-text-primary">Socialite</span>
+              </div>
             </Link>
-            <Link to={`${userdata?.username ? `/search` : "/login"}`}>
-              <span className="flex hover:bg-gray-700  p-3 px-5 m-auto rounded-full justify-center xl:justify-start">
-                <SearchIcon />
-                <label className="xl:block hidden mx-2">explore</label>
-              </span>
-            </Link>
-            <Link to={`${userdata?.username ? `/notification` : "/login"}`}>
-              <span className="flex relative  hover:bg-gray-700  p-3 px-5 m-auto rounded-full justify-center xl:justify-start">
-                <NotificationsIcon />
-                {userNotifications?.length > userdata?.notification && (
-                  <div className="my-3">
-                    <span className="absolute rounded-full py-1  text-xs font-medium content-[''] leading-none grid place-items-center top-[2%] right-[30%] translate-x-2/4 -translate-y-2/4 bg-red-500 text-white min-w-[24px] min-h-[24px]">
-                      {userNotifications?.length - userdata?.notification}
+          </div>
+
+          {/* Navigation Items */}
+          <nav className="flex-1 flex flex-col">
+            {navItemsDesktop.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.path);
+              
+              return (
+                <Link key={item.id} to={item.path}>
+                  <div
+                    className={`relative flex items-center gap-4 px-4 py-3 mb-1 rounded-full transition-colors duration-200 hover:bg-bg-hover ${
+                      active
+                        ? "font-bold"
+                        : "font-normal"
+                    }`}
+                  >
+                    <div className="relative">
+                      <Icon className={`text-2xl ${active ? "text-text-primary" : "text-text-secondary"}`} />
+                      {item.badge && (
+                        <Badge count={item.badge} variant="default" size="sm" />
+                      )}
+                    </div>
+                    <span className={`text-xl ${active ? "text-text-primary" : "text-text-secondary"}`}>
+                      {item.label}
                     </span>
                   </div>
-                )}
-                <label className="xl:block hidden mx-2">Notifications</label>
-              </span>
-            </Link>
-            <Link to={`${userdata?.username ? `/lists` : "/login"}`}>
-              <span className="flex hover:bg-gray-700  p-3 px-5 m-auto rounded-full justify-center xl:justify-start">
-                <BookmarksIcon />
-                <label className="xl:block mx-2 hidden">lists</label>
-              </span>
-            </Link>
-            <Link
-              to={`${
-                userdata?.username ? `/profile/${userdata?.username}` : "/login"
-              }`}
+                </Link>
+              );
+            })}
+
+            {/* Post Button */}
+            <Button
+              onClick={() => setpost(true)}
+              className="w-[90%] mx-auto mb-5 mt-auto"
             >
-              <span className="flex hover:bg-gray-700  p-3 px-5 m-auto rounded-full justify-center xl:justify-start">
-                <PersonIcon />
-                <label className="xl:block mx-2 hidden">proflie</label>
-              </span>
-            </Link>
-            <Link to={`${userdata?.username ? `/setting` : "/login"}`}>
-              <span className="flex hover:bg-gray-700  p-3 md:px-5 m-auto rounded-full justify-center xl:justify-start">
-                <SettingsIcon />
-                <label className="xl:block hidden mx-2">settings </label>
-              </span>
-            </Link>
-            <Button className="  my-5 max-w-40">
-              <span
-                onClick={() => {
-                  setpost(true);
-                }}
-                className="flex justify-center w-full space-x-2 "
-              >
-                <AddIcon />
-                <label className="xl:block hidden">post</label>
-              </span>
+              Post
             </Button>
           </nav>
 
-          <Button className="mb-10 max-w-40">
-            {auth.currentUser ? (
-              <span
-                className="flex space-x-2  justify-center"
+          {/* User Profile */}
+          <div className="mt-auto mb-4">
+            {auth.currentUser && userdata ? (
+              <div
+                onClick={() => navigate(`/profile/${userdata.username}`)}
+                className="flex items-center gap-3 px-4 py-3 rounded-full cursor-pointer transition-colors duration-200 hover:bg-bg-hover"
+              >
+                <Avatar
+                  src={userdata.profileImageURL}
+                  alt={userdata.name || "Profile"}
+                  size="md"
+                  fallback={defaultprofileimage}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-[15px] text-text-primary truncate">{userdata.name}</p>
+                  <p className="text-[15px] text-text-secondary truncate">@{userdata.username}</p>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => navigate("/login")}
+                className="w-full bg-transparent border border-border-default text-text-primary font-bold py-3 rounded-full hover:bg-bg-hover transition-colors duration-200"
+              >
+                Sign In
+              </button>
+            )}
+
+            {auth.currentUser && (
+              <button
                 onClick={async () => {
                   await auth.signOut();
                   navigate("/");
                 }}
+                className="w-full mt-2 text-text-secondary hover:text-text-primary text-[15px] py-2 rounded-full hover:bg-bg-hover transition-colors duration-200"
               >
-                <LogoutIcon />
-                <label className="xl:block hidden">sign out</label>
-              </span>
-            ) : (
-              <span
-                className="flex space-x-2 justify-center"
-                onClick={async () => {
-                  navigate("/login");
-                }}
-              >
-                <LoginIcon />
-                <label className="xl:block hidden">sign in</label>
-              </span>
+                Sign Out
+              </button>
             )}
-          </Button>
+          </div>
         </nav>
       </header>
 
+      {/* Create Post Modal */}
       {post && (
         <Popupitem
           closefunction={() => {
             setpost(false);
           }}
         >
-          <div className="my-5 post popup">
+          <div className="my-5">
             <Createpost
               toggle={() => {
                 setpost(false);
@@ -149,10 +163,12 @@ const Navbar = () => {
         </Popupitem>
       )}
 
-      {/* mobile  */}
-
+      {/* Mobile Navbar */}
+    <div className="md:hidden">
       <Mobilenavbar setpost={setpost} navbar={navbar} />
+    </div>
     </Fragment>
   );
 };
+
 export default Navbar;

@@ -1,5 +1,5 @@
 import React from "react";
-import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import { MdVisibilityOff as VisibilityOffIcon } from "react-icons/md";
 
 function HidePost({ sethide, setactive }) {
   return (

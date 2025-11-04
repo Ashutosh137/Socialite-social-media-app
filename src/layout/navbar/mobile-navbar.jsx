@@ -1,102 +1,143 @@
 import React, { Fragment } from "react";
-import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { Link, useLocation } from "react-router-dom";
 import { useUserdatacontext } from "../../service/context/usercontext";
 import Button from "../../ui/button";
-import PersonIcon from "@mui/icons-material/Person";
-import CottageIcon from "@mui/icons-material/Cottage";
-import SearchIcon from "@mui/icons-material/Search";
-import NotificationsIcon from "@mui/icons-material/Notifications";
+import Avatar from "../../ui/avatar";
+import { MdPerson as PersonIcon } from "react-icons/md";
+import { AiFillHome as CottageIcon } from "react-icons/ai";
+import { BsSearch as SearchIcon } from "react-icons/bs";
+import { MdNotifications as NotificationsIcon } from "react-icons/md";
+import { MdAdd as AddIcon } from "react-icons/md";
+import { MdSettings as SettingsIcon } from "react-icons/md";
 
-import AddIcon from "@mui/icons-material/Add";
-import SettingsIcon from "@mui/icons-material/Settings";
 function Mobilenavbar({ navbar, setpost }) {
   const { userdata, defaultprofileimage } = useUserdatacontext();
+  const location = useLocation();
+
+  const isActive = (path) => {
+    if (path === "/home") return location.pathname === "/home";
+    return location.pathname.startsWith(path);
+  };
+
+  const navItems = [
+    { icon: CottageIcon, path: "/home" },
+    { icon: SearchIcon, path: "/search" },
+    { icon: NotificationsIcon, path: userdata?.username ? "/notification" : "/login" },
+    { icon: PersonIcon, path: userdata?.username ? `/profile/${userdata.username}` : "/login" },
+  ];
+
   return (
     <Fragment>
-      <nav
-        className={`md:hidden z-40 post fixed top-0 left-0 transition-opacity  duration-100  bg-black w-full ${
-          navbar ? "" : "hidden"
-        }`}
-      >
-        <header className="flex px-3 my-4  align-middle justify-between">
-          <Link
-            to={`${
-              userdata?.username ? `/profile/${userdata?.username}` : "/login"
-            }`}
-            className="mx-2"
+      {/* Mobile Top Navbar */}
+      <AnimatePresence>
+        {navbar && (
+          <motion.nav
+            initial={{ y: -100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -100, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="md:hidden fixed top-0 left-0 right-0 z-50 bg-bg-default/80 backdrop-blur-xl border-b border-border-default"
           >
-            <img
-              className="w-10 h-10 aspect-square rounded-full hover:border-gray-100 = "
-              src={userdata?.profileImageURL || defaultprofileimage}
-              alt={defaultprofileimage}
-              onError={(e) => {
-                e.target.src = defaultprofileimage;
-              }}
-            />
-          </Link>
+            <header className="flex items-center justify-between px-4 py-3">
+              <Link
+                to={userdata?.username ? `/profile/${userdata.username}` : "/login"}
+                className="flex-shrink-0"
+              >
+                <Avatar
+                  src={userdata?.profileImageURL}
+                  alt={userdata?.name || "Profile"}
+                  size="md"
+                  fallback={defaultprofileimage}
+                  showBorder={true}
+                  onClick={() => {}}
+                />
+              </Link>
 
-          <h1 className="text-3xl m-auto capitalize title">socialite</h1>
+              <Link to="/home">
+                <motion.h1
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="text-2xl font-bold text-gradient cursor-pointer"
+                >
+                  Socialite
+                </motion.h1>
+              </Link>
 
-          <Link
-            className="border-gray-600 aspect-square hover:border-gray-100 border-2 rounded-3xl p-1  "
-            to={`${userdata?.username ? `/setting` : "/login"}`}
-          >
-            <SettingsIcon />
-          </Link>
-        </header>
-        <hr className="border-gray-500 rounded-md" />
-      </nav>
+              <Link
+                to={userdata?.username ? "/setting" : "/login"}
+                className="flex-shrink-0"
+              >
+                <motion.div
+                  whileHover={{ scale: 1.1, backgroundColor: "rgba(22, 24, 28, 0.5)" }}
+                  whileTap={{ scale: 0.9 }}
+                  className="p-2 rounded-full hover:bg-bg-hover transition-all duration-200"
+                >
+                  <SettingsIcon className="text-text-secondary hover:text-text-primary transition-colors duration-200" />
+                </motion.div>
+              </Link>
+            </header>
+          </motion.nav>
+        )}
+      </AnimatePresence>
 
-      <div
-        className={`md:hidden z-40 post left-0 fixed bottom-0 w-full ${
-          navbar ? "" : "hidden"
-        }`}
-      >
-        <hr className="border-gray-500" />
-        <div className="flex py-1 rounded-sm bg-black">
-          <Link
-            to="/home"
-            className=" border-gray-700 hover:border-gray-100 border-2 rounded-3xl p-2  m-auto"
+      {/* Mobile Bottom Navbar */}
+      <AnimatePresence>
+        {navbar && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-bg-default/80 backdrop-blur-xl border-t border-border-default"
           >
-            <span>
-              <CottageIcon />
-            </span>
-          </Link>
-          <Link
-            className=" border-gray-700 hover:border-gray-100 border-2 rounded-3xl p-2  m-auto"
-            to="/search"
-          >
-            <span>
-              <SearchIcon />
-            </span>
-          </Link>
-          <Button className="rounded-full ">
-            <span
-              onClick={() => {
-                setpost(true);
-              }}
-              className="flex justify-center space-x-1 "
-            >
-              <AddIcon />
-            </span>
-          </Button>
+            <div className="flex items-center justify-around py-2 px-4">
+              {navItems.map((item, index) => {
+                const Icon = item.icon;
+                const active = isActive(item.path);
+                
+                return (
+                  <motion.div
+                    key={item.path}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <Link to={item.path}>
+                      <motion.div
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        className={`p-3 rounded-full transition-all duration-200 ${
+                          active
+                            ? "bg-bg-tertiary text-accent-500 font-semibold"
+                            : "text-text-secondary hover:bg-bg-hover hover:text-text-primary"
+                        }`}
+                      >
+                        <Icon className={`text-2xl ${active ? "text-accent-500" : ""}`} />
+                      </motion.div>
+                    </Link>
+                  </motion.div>
+                );
+              })}
 
-          <Link
-            to={`${userdata?.username ? `/notification` : "/login"}`}
-            className=" border-gray-700 hover:border-gray-100 border-2 rounded-3xl p-2  m-auto"
-          >
-            <NotificationsIcon />
-          </Link>
-          <Link
-            to={`${
-              userdata?.username ? `/profile/${userdata?.username}` : "/login"
-            }`}
-            className=" border-gray-700 hover:border-gray-100 border-2 rounded-3xl p-2  m-auto"
-          >
-            <PersonIcon />
-          </Link>
-        </div>
-      </div>
+              {/* Create Post Button */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 15 }}
+              >
+                <Button
+                  onClick={() => setpost(true)}
+                  className="rounded-full p-3 shadow-medium hover:shadow-glow"
+                  size="sm"
+                >
+                  <AddIcon />
+                </Button>
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Fragment>
   );
 }

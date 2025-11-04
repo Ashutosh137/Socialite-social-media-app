@@ -51,13 +51,70 @@ export const Create_Account = async ({
 };
 export const Create_notification = async (uid, intent) => {
   try {
+    // Create notification in database
     await addDoc(collection(firestore, "notification"), {
       uid: uid,
       intent: intent,
       time: new Date(),
     });
+
+    // Send email notification asynchronously
+    sendNotificationEmailAsync(uid, intent).catch((emailError) => {
+      // Log email error but don't fail notification creation
+      console.error("Error sending notification email:", emailError);
+    });
   } catch (err) {
-    console.error(err);
+    console.error("Error creating notification:", err);
+  }
+};
+
+/**
+ * Helper function to send email notification
+ * Runs asynchronously to not block notification creation
+ */
+const sendNotificationEmailAsync = async (uid, intent) => {
+  try {
+    // Get recipient user data
+    const recipientUser = await get_userdata(uid);
+    if (!recipientUser?.email) {
+      console.warn("No email address found for user:", uid);
+      return;
+    }
+
+    // Get actor user data for email content
+    let actorUser = null;
+    if (intent?.likeby) {
+      actorUser = await get_userdata(intent.likeby);
+    }
+
+    // Import email service dynamically to avoid blocking
+    const { sendNotificationEmail } = await import("../email/emailService.js");
+    
+    // Build post URL if postid exists
+    let postUrl = "";
+    if (intent?.postid) {
+      if (actorUser?.username) {
+        postUrl = `${window.location.origin}/profile/${actorUser.username}/${intent.postid}`;
+      } else if (recipientUser?.username) {
+        postUrl = `${window.location.origin}/profile/${recipientUser.username}/${intent.postid}`;
+      }
+    }
+
+    // Send email notification
+    await sendNotificationEmail(
+      recipientUser.email,
+      intent.type,
+      {
+        actorName: actorUser?.name || "Someone",
+        actorUsername: actorUser?.username || "",
+        recipientName: recipientUser?.name || "User",
+        postUrl: postUrl,
+        postContent: intent?.postContent || "",
+      }
+    );
+  } catch (error) {
+    console.error("Error in sendNotificationEmailAsync:", error);
+    throw error;
   }
 };
 

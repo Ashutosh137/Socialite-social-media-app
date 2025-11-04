@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { auth } from "../service/Auth";
 import {
   check_data_is_exist,
@@ -74,9 +75,9 @@ const CreateAccount = () => {
   };
 
   return (
-    <div className="capitalize sm:px-5 px-3">
+    <div className="w-full max-w-2xl mx-auto px-4 py-8 sm:py-12">
       <Helmet>
-        <title>Create account | socilaite</title>
+        <title>Create account | Socialite</title>
         <meta name="description" content="Create account" />
         <link rel="canonical" href="/Create account" />
         <meta name="robots" content="index, follow" />
@@ -85,11 +86,20 @@ const CreateAccount = () => {
         <meta name="author" content="Create account" />
         <meta name="language" content="EN" />
       </Helmet>
-      <h1 className="text-4xl md:text-6xl sm:my-12 my-5 font-bold ">
-        create an account with us
-      </h1>
-      <form
-        className="flex flex-col space-y-6  "
+      
+      <motion.h1
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-4xl md:text-5xl font-bold text-text-primary mb-8 text-center"
+      >
+        Create your account
+      </motion.h1>
+      
+      <motion.form
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="flex flex-col gap-6"
         onSubmit={(e) => {
           e.preventDefault();
           !IsUsernameExist && checkdata();
@@ -98,31 +108,31 @@ const CreateAccount = () => {
         <Input
           type="text"
           name="username"
-          className={"max-w-80 my-2 sm:max-w-md"}
-          placeholder="enter your unique uername ..."
+          label="Username"
+          className="max-w-full"
+          placeholder="Enter your unique username..."
           maxLength={20}
           value={formdata.username}
           onChange={handelusername}
           required
         />
 
-        <label className="text-gray-500 text-sm mx-3 m-1">
-          username should not includes any special charcter
-        </label>
+        <p className="text-text-tertiary text-sm -mt-4">
+          Username should not include any special characters
+        </p>
 
         {IsUsernameExist && (
-          <label className="text-red-400 mx-3 capitalize">
-            invalid username or already exist
-          </label>
+          <p className="text-status-error text-sm -mt-4">
+            Invalid username or already exists
+          </p>
         )}
 
         <Input
-          min={4}
-          max={10}
           type="text"
-          className={"max-w-80 my-2 sm:max-w-md"}
           name="name"
-          placeholder="full name..."
+          label="Full Name"
+          className="max-w-full"
+          placeholder="Enter your full name..."
           value={formdata.name}
           onChange={handelchange}
           required
@@ -131,26 +141,32 @@ const CreateAccount = () => {
         <Input
           type="date"
           name="age"
+          label="Date of Birth"
+          className="max-w-full"
           value={formdata.age}
-          className={"max-w-80 my-2 sm:max-w-md"}
           onChange={handelchange}
           required
         />
 
         <TextInput
-          type="text"
-          min={4}
-          max={50}
-          className={"max-w-80 my-2 sm:max-w-md"}
           name="bio"
-          placeholder="write about your exprience , your favirate topics and many more about you "
+          label="Bio (Optional)"
+          className="max-w-full"
+          placeholder="Write about your experience, favorite topics, and more about you..."
           value={formdata.bio}
           onChange={handelchange}
         />
-        <Button className="p-9 py-2" type="submit">
-          create-account
+        
+        <Button
+          type="submit"
+          variant="primary"
+          className="w-full mt-4"
+          size="lg"
+          disabled={IsUsernameExist}
+        >
+          Create Account
         </Button>
-      </form>
+      </motion.form>
     </div>
   );
 };

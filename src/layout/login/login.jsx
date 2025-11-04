@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { auth, forget_password, signInWithGoogle } from "../../service/Auth";
-import GoogleIcon from "@mui/icons-material/Google";
+import { FaGoogle as GoogleIcon } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Input } from "../../ui/input";
@@ -11,19 +12,32 @@ import PropTypes from "prop-types";
 const Login = ({ onenter, role }) => {
   const [email, setemail] = useState("");
   const [pass, setpass] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
 
   const handelsubmit = async () => {
-    await onenter(email, pass);
+    setIsLoading(true);
+    try {
+      await onenter(email, pass);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handelgooglesignup = async () => {
-    const data = await signInWithGoogle().then(() => {
-      data && role === "signup"
-        ? navigate("./create-account")
-        : navigate("/home");
-    });
+    setIsLoading(true);
+    try {
+      await signInWithGoogle().then(() => {
+        role === "signup"
+          ? navigate("./create-account")
+          : navigate("/home");
+      });
+    } catch (error) {
+      toast.error("Failed to sign in with Google");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -32,32 +46,57 @@ const Login = ({ onenter, role }) => {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [navigate]);
+
+  const isLogin = role === "login";
 
   return (
-    <section className="flex post flex-col sm:w-3/4  p-4 w-full">
-      <h3 className="text-3xl my-2 font-bold "> join now </h3>
-      <div className=" my-5 sm: bg-white text-black text-center hover:scale-105 transition-all ease font-semibold outline rounded-2xl ">
-        <button
-          className="m-auto capitalize flex p-2 px-6 text-base sm:text-xl "
-          onClick={handelgooglesignup}
-        >
-          <i className="mx-2">
-            <GoogleIcon />
-          </i>
-          {role} with Google
-        </button>
-      </div>
-      <div className="my-4 ">
-        <hr />
-        <h2 className="text-xl text-center py-2 font-semibold mx-4">
-          or , continue with email
-        </h2>
-        <hr />
+    <motion.section
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="flex flex-col w-full max-w-md mx-auto px-4 py-8 sm:py-12"
+    >
+      {/* Header */}
+      <div className="mb-8 text-center">
+        <h1 className="text-4xl font-bold text-text-primary mb-2">
+          {isLogin ? "Welcome back" : "Join Socialite"}
+        </h1>
+        <p className="text-text-secondary text-[15px]">
+          {isLogin
+            ? "Sign in to continue to your account"
+            : "Create your account to get started"}
+        </p>
       </div>
 
+      {/* Google Sign In Button */}
+      <motion.div
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        className="mb-6"
+      >
+        <Button
+          onClick={handelgooglesignup}
+          disabled={isLoading}
+          variant="secondary"
+          className="w-full flex items-center justify-center gap-3 py-3"
+          size="lg"
+        >
+          <GoogleIcon className="text-xl" />
+          <span className="capitalize">{role} with Google</span>
+        </Button>
+      </motion.div>
+
+      {/* Divider */}
+      <div className="flex items-center gap-4 mb-6">
+        <div className="flex-1 h-px bg-border-default" />
+        <span className="text-text-secondary text-sm">or</span>
+        <div className="flex-1 h-px bg-border-default" />
+      </div>
+
+      {/* Email Form */}
       <form
-        className="flex flex-col "
+        className="flex flex-col gap-4"
         onSubmit={(e) => {
           e.preventDefault();
           handelsubmit();
@@ -65,72 +104,80 @@ const Login = ({ onenter, role }) => {
       >
         <Input
           type="email"
+          name="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setemail(e.target.value)}
           required
-          className={"my-2 outline"}
+          label="Email"
         />
+
         <Input
           type="password"
-          placeholder="password"
+          name="password"
+          placeholder="Password"
           value={pass}
           onChange={(e) => setpass(e.target.value)}
           required
-          className={"my-1 outline"}
+          label="Password"
         />
-        <p className="text-xs sm:text-sm py-3 ">
-          By signing up, you agree to the <b>Terms of Service</b> and
-          <b> Privacy Policy</b>, including Cookie Use.
-        </p>
-        <Button
-          className={
-            "w-80 text-white/90 text-base md:text-lg mx-auto p-1 sm:p-1 rounded-xl"
-          }
-          type="submit"
-        >
-          {role}
-        </Button>
 
         {role === "login" && (
           <button
             onClick={async () => {
-              if (email === "") toast.error("plase enter your email address");
-              else {
+              if (email === "") {
+                toast.error("Please enter your email address");
+              } else {
                 const data = await forget_password(email);
-                if (!data) toast.error("Email not found");
-                else toast.success("Email sent , please check your email box");
+                if (!data) {
+                  toast.error("Email not found");
+                } else {
+                  toast.success("Email sent! Please check your inbox.");
+                }
               }
             }}
-            className="mr-auto"
             type="button"
+            className="text-sm text-accent-500 hover:text-accent-400 transition-colors text-left mt-2"
           >
-            Forget password ?
+            Forgot password?
           </button>
         )}
+
+        <Button
+          type="submit"
+          disabled={isLoading || !email || !pass}
+          variant="primary"
+          className="w-full mt-2"
+          size="lg"
+        >
+          {isLoading ? "Loading..." : role === "login" ? "Sign In" : "Sign Up"}
+        </Button>
       </form>
-      {role === "signup" ? (
-        <div className="my-3  capitalize text-base sm:text-xl flex flex-col ">
-          <label className="my-3">already have an account ? </label>
-          <Link
-            to="/login"
-            className="my-3 w-80 mx-auto border-1 rounded-2xl text-center border font-semibold py-1 text-sky-600 capitalize"
-          >
-            sign-in
-          </Link>
-        </div>
-      ) : (
-        <div className="my-2  capitalize text-base sm:text-xl flex flex-col ">
-          <label className="my-3">don't have an account ? </label>
-          <Link
-            to="/"
-            className="my-3 w-80 mx-auto border-1 rounded-2xl border text-center font-semibold py-1 text-sky-600 capitalize"
-          >
-            sign-up
-          </Link>
-        </div>
+
+      {/* Terms */}
+      {!isLogin && (
+        <p className="text-xs text-text-tertiary text-center mt-4 px-4">
+          By signing up, you agree to the{" "}
+          <span className="text-accent-500 hover:underline">Terms of Service</span>{" "}
+          and{" "}
+          <span className="text-accent-500 hover:underline">Privacy Policy</span>,
+          including Cookie Use.
+        </p>
       )}
-    </section>
+
+      {/* Sign In/Sign Up Link */}
+      <div className="mt-8 text-center">
+        <p className="text-text-secondary text-[15px] mb-3">
+          {isLogin ? "Don't have an account?" : "Already have an account?"}
+        </p>
+        <Link
+          to={isLogin ? "/" : "/login"}
+          className="text-accent-500 hover:text-accent-400 font-semibold text-[15px] transition-colors"
+        >
+          {isLogin ? "Sign up" : "Sign in"}
+        </Link>
+      </div>
+    </motion.section>
   );
 };
 

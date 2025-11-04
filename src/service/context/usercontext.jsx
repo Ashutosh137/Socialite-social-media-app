@@ -25,17 +25,27 @@ export const UserDataProvider = ({ children, value, setvalue }) => {
   const [GetAllusers, setGetAllusers] = useState([]);
   const [defaultprofileimage, setdefaultprofileimage] = useState(image);
 
-  const delete_post = (postid) => {
+  const delete_post = useCallback(async (postid) => {
     if (userdata) {
-      setuserdata((prev) => ({
-        ...prev,
-        post: prev.post.filter((p) => {
-          return p.postid !== postid;
-        }),
-      }));
-      toast.success("Post Deleted");
+      try {
+        // Update local state
+        setuserdata((prev) => ({
+          ...prev,
+          post: prev.post.filter((p) => {
+            return p.postid !== postid;
+          }),
+        }));
+        
+        // Trigger event to refresh home page
+        window.dispatchEvent(new CustomEvent('postDeleted', { detail: { postid } }));
+        
+        toast.success("Post Deleted");
+      } catch (error) {
+        console.error("Error deleting post:", error);
+        toast.error("Failed to delete post");
+      }
     }
-  };
+  }, [userdata]);
 
   useEffect(() => {
     const dataforallusers = async () => {

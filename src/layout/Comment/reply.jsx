@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useUserdatacontext } from "../../service/context/usercontext";
 import { Create_notification, get_userdata } from "../../service/Auth/database";
-import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import { MdFavoriteBorder as FavoriteBorderIcon } from "react-icons/md";
 import Time from "../../service/utiles/time";
-import { Skeleton } from "@mui/material";
+import { Skeleton } from "../../ui/skeleton";
 import { auth } from "../../service/Auth";
 import { toast } from "react-toastify";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
+import { MdMoreVert as MoreVertIcon } from "react-icons/md";
 import { Popupitem } from "../../ui/popup";
-import FavoriteIcon from "@mui/icons-material/Favorite";
+import { MdFavorite as FavoriteIcon } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import Menu from "../Reply/Menu";
 

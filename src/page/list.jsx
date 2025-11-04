@@ -2,8 +2,9 @@ import React, { Fragment } from "react";
 import { useUserdatacontext } from "../service/context/usercontext";
 import { useNavigate } from "react-router-dom";
 import Postidtopost from "../layout/post/postidtopost";
-import BookmarkRemoveSharpIcon from "@mui/icons-material/BookmarkRemoveSharp";
+import { MdBookmarkRemove as BookmarkRemoveSharpIcon } from "react-icons/md";
 import { Helmet } from "react-helmet";
+
 export const List = () => {
   const { userdata, setuserdata } = useUserdatacontext();
   const navigate = useNavigate();
@@ -11,64 +12,60 @@ export const List = () => {
   return (
     <Fragment>
       <Helmet>
-        <title>Bookmark | socilaite</title>
-        <meta name="description" content="Bookmark" />
-        <link rel="canonical" href="/Bookmark" />
-        <meta name="robots" content="index, follow" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="keywords" content="Bookmark" />
-        <meta name="author" content="Bookmark" />
-        <meta name="language" content="EN" />
+        <title>Bookmarks | Socialite</title>
       </Helmet>
-      <div className="w-full post  sm:px-5 py-5 sm:py-0">
-        <div className="flex">
-          <h1 className="sm:text-2xl text-xl p-2 sm:py-0  my-5 border-b-2 border-gray-500  text-left capitalize ">
-            bookmark collection
-          </h1>
-          <i
-            title="delete all bookmark"
-            className="my-auto ml-auto"
-            onClick={() => {
-              setuserdata((prev) => ({ ...prev, saved: [] }));
-            }}
-          >
-            <BookmarkRemoveSharpIcon />
-          </i>
-        </div>
-
-        <div className="">
-          {userdata?.saved.length > 0 ? (
-            <>
-              {" "}
-              {userdata?.saved.map((item, index) => {
-                return (
-                  <Postidtopost
-                    postedby={item.postedby}
-                    postid={item?.postid}
-                    key={index}
-                  />
-                );
-              })}
-            </>
-          ) : (
-            <div className=" capitalize text-center py-10 m-auto">
-              <div className="flex flex-col space-y-20 justify-center align-middle">
-                <label className="text-sm sm:text-base">
-                  Nothing to see here yet — pin your favorite Lists to access
-                  them quickly.
-                </label>
-                <button
-                  className="bg-blue-500 text-white text-center p-2 md:px-5  m-auto capitalize md:w-40 rounded-full"
-                  onClick={() => {
-                    navigate("/home");
-                  }}
-                >
-                  Add Post
-                </button>
-              </div>
-            </div>
+      
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-20 bg-bg-default/80 backdrop-blur-xl border-b border-border-default">
+        <div className="flex items-center justify-between h-[53px] px-4">
+          <h1 className="text-xl font-bold text-text-primary">Bookmarks</h1>
+          {userdata?.saved?.length > 0 && (
+            <button
+              title="Delete all bookmarks"
+              onClick={() => {
+                setuserdata((prev) => ({ ...prev, saved: [] }));
+              }}
+              className="p-2 rounded-full hover:bg-bg-hover text-text-secondary hover:text-status-error transition-colors"
+            >
+              <BookmarkRemoveSharpIcon className="text-xl" />
+            </button>
           )}
         </div>
+      </div>
+
+      {/* Bookmarks List */}
+      <div className="w-full">
+        {userdata?.saved?.length > 0 ? (
+          <div className="flex flex-col">
+            {userdata.saved.map((item, index) => (
+              <Postidtopost
+                key={index}
+                postedby={item.postedby}
+                postid={item?.postid}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-20 px-4">
+            <div className="flex flex-col items-center gap-4 max-w-md text-center">
+              <BookmarkRemoveSharpIcon className="text-6xl text-text-tertiary" />
+              <div className="flex flex-col gap-2">
+                <p className="text-[15px] font-medium text-text-primary">
+                  No bookmarks yet
+                </p>
+                <p className="text-[13px] text-text-secondary">
+                  Pin your favorite posts to access them quickly.
+                </p>
+              </div>
+              <button
+                onClick={() => navigate("/home")}
+                className="px-4 py-2 bg-accent-500 hover:bg-accent-600 text-white font-bold rounded-full text-[15px] transition-colors mt-4"
+              >
+                Explore Posts
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </Fragment>
   );

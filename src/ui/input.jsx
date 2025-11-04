@@ -1,47 +1,65 @@
 import { twMerge } from "tailwind-merge";
-function Input({ name, placeholder, className, ...props }) {
+import { motion } from "framer-motion";
+
+function Input({ name, placeholder, className, label, ...props }) {
   return (
-    <div className="flex w-full flex-col space-y-1">
-      {name && (
-        <label htmlFor={name} className=" font-sans text-gray-100 p-1 mx-3 ">
-          {name}
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+      className="flex w-full flex-col space-y-2"
+    >
+      {label && (
+        <label
+          htmlFor={name}
+          className="text-sm font-semibold text-text-secondary px-1 transition-colors duration-200"
+        >
+          {label}
         </label>
       )}
 
       <input
         className={twMerge(
-          `  placeholder:capitalize focus:border bg-black text-white outline-1 p-4 py-2 border-gray-300 placeholder:font-serif placeholder:text-neutral-500 md:text-lg text-sm  rounded-xl `,
+          "input-field w-full text-base placeholder:capitalize resize-none placeholder:text-text-tertiary focus:ring-2 focus:ring-accent-500/20",
           className,
         )}
         id={name}
         name={name}
-        {...props}
         placeholder={placeholder}
+        {...props}
       />
-    </div>
+    </motion.div>
   );
 }
 
-function TextInput({ name, placeholder, className, ...props }) {
+function TextInput({ name, placeholder, className, label, ...props }) {
   return (
-    <div className="flex w-full flex-col ">
-      {name && (
-        <label htmlFor={name} className=" font-sans text-gray-100 p-1 mx-3 ">
-          {name}
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+      className="flex w-full flex-col space-y-2"
+    >
+      {label && (
+        <label
+          htmlFor={name}
+          className="text-sm font-semibold text-text-secondary px-1 transition-colors duration-200"
+        >
+          {label}
         </label>
       )}
 
       <textarea
         placeholder={placeholder}
         className={twMerge(
-          " p-5 py-3 placeholder:capitalize bg-inherit text-white  border-2 border-gray-300 placeholder:font-serif placeholder:text-neutral-500  w-full md:text-lg text-sm  border-1  rounded-2xl my-1  ",
+          "input-field w-full min-h-[120px] text-base placeholder:capitalize resize-none placeholder:text-text-tertiary focus:ring-2 focus:ring-accent-500/20",
           className,
         )}
         id={name}
         name={name}
         {...props}
       />
-    </div>
+    </motion.div>
   );
 }
 

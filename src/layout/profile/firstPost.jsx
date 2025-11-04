@@ -1,5 +1,5 @@
 import React from "react";
-import CameraEnhanceIcon from "@mui/icons-material/CameraEnhance";
+import { MdCameraEnhance as CameraEnhanceIcon } from "react-icons/md";
 
 function FirstPost({ setactive }) {
   return (

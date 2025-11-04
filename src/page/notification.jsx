@@ -1,7 +1,7 @@
 import React, { Fragment } from "react";
 import { useUserdatacontext } from "../service/context/usercontext";
 import Notify from "../layout/notification/notify";
-import ArrowBack from "@mui/icons-material/ArrowBack";
+import { MdArrowBack as ArrowBack } from "react-icons/md";
 import { Helmet } from "react-helmet";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -21,33 +21,35 @@ export default function Notification() {
   return (
     <Fragment>
       <Helmet>
-        <title>Notification | socilaite</title>
-        <meta name="description" content="Notification" />
-        <link rel="canonical" href="/Notification" />
-        <meta name="robots" content="index, follow" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="keywords" content="Notification" />
-        <meta name="author" content="Notification" />
-        <meta name="language" content="EN" />
+        <title>Notifications | Socialite</title>
       </Helmet>
-      <div className="w-full sm:px-10 pb-20">
-        <div className="flex border-b-2 border-gray-700 py-2">
-          <i
-            onClick={() => {
-              navigate("/home");
-            }}
-            className="my-auto px-2"
+      
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-20 bg-bg-default/80 backdrop-blur-xl border-b border-border-default">
+        <div className="flex items-center gap-4 h-[53px] px-4">
+          <button
+            onClick={() => navigate("/home")}
+            className="p-2 rounded-full hover:bg-bg-hover text-text-secondary hover:text-text-primary transition-colors"
           >
-            <ArrowBack />
-          </i>
-          <h1 className="text-xl my-auto py-2">Notification</h1>
+            <ArrowBack className="text-xl" />
+          </button>
+          <h1 className="text-xl font-bold text-text-primary">Notifications</h1>
         </div>
-        {userNotifications?.map((notification, index) => {
-          return <Notify notification={notification} key={index} />;
-        })}
+      </div>
+
+      {/* Notifications List */}
+      <div className="w-full">
+        {userNotifications?.map((notification, index) => (
+          <Notify key={index} notification={notification} />
+        ))}
         {userNotifications?.length === 0 && (
-          <div className="capitalize text-base text-center my-10 text-gray-400">
-            no notification yet
+          <div className="flex flex-col items-center justify-center py-20 px-4">
+            <p className="text-text-secondary text-[15px] font-medium">
+              No notifications yet
+            </p>
+            <p className="text-text-tertiary text-[13px] mt-2">
+              You'll see notifications here when you get them
+            </p>
           </div>
         )}
       </div>

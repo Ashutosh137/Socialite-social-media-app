@@ -5,8 +5,10 @@ import {
   get_userdata,
   updateprofileuserdata,
 } from "../../service/Auth/database";
-import { Skeleton } from "@mui/material";
+import { Skeleton } from "../../ui/skeleton";
+import Avatar from "../../ui/avatar";
 import { auth } from "../../service/Auth";
+
 export default function Profileviewbox({
   profile = null,
   bio = false,
@@ -68,62 +70,68 @@ export default function Profileviewbox({
   if (profileuserdata?.block?.includes(userdata?.uid) || !profileuserdata) {
     return <></>;
   }
+
+  const isFollowing = userdata?.following?.includes(profileuserdata?.uid);
+
   return (
-    <section className="flex w-80  justify-between  post cursor-pointer p-1 align-middle ">
-      <img
-        src={profileuserdata?.profileImageURL || defaultprofileimage}
-        onError={(e) => {
-          e.target.src = defaultprofileimage;
-        }}
-        alt={defaultprofileimage}
-        className="rounded-full w-10 aspect-square h-10 my-auto mx-1"
+    <div className="flex items-center gap-3 px-4 py-3 hover:bg-bg-hover transition-colors">
+      <Avatar
+        src={profileuserdata?.profileImageURL}
+        alt={profileuserdata?.name || "Profile"}
+        size="md"
+        fallback={defaultprofileimage}
+        onClick={() => navigate(`/profile/${profileuserdata?.username}`)}
       />
+      
       <div
-        className="flex w-full m-1  flex-col cursor-pointer"
-        onClick={() => {
-          navigate(`/profile/${profileuserdata?.username}`);
-        }}
+        className="flex-1 min-w-0 cursor-pointer"
+        onClick={() => navigate(`/profile/${profileuserdata?.username}`)}
       >
-        <label className="text-base overflow w-full">
-          {profileuserdata?.name || (
-            <Skeleton
-              animation="wave"
-              sx={{ bgcolor: "grey.900" }}
-              variant="text"
-              width={100}
-            />
+        <div className="flex flex-col gap-0.5">
+          <span className="font-bold text-[15px] text-text-primary hover:underline truncate">
+            {profileuserdata?.name || (
+              <Skeleton
+                animation="wave"
+                sx={{ bgcolor: "grey.900" }}
+                variant="text"
+                width={100}
+              />
+            )}
+          </span>
+          <span className="text-[15px] text-text-secondary truncate">
+            @
+            {profileuserdata?.username || (
+              <Skeleton
+                animation="wave"
+                sx={{ bgcolor: "grey.900" }}
+                variant="text"
+                width={100}
+              />
+            )}
+          </span>
+          {bio && profileuserdata?.bio && (
+            <p className="text-[15px] text-text-primary mt-1 line-clamp-2">
+              {profileuserdata.bio}
+            </p>
           )}
-        </label>
-        <label className="text-sm overflow text-gray-400 flex">
-          @
-          {profileuserdata?.username || (
-            <Skeleton
-              animation="wave"
-              sx={{ bgcolor: "grey.900" }}
-              variant="text"
-              width={100}
-            />
-          )}
-        </label>
-        {bio && (
-          <pre className="font-sans text-start top-3 text-sm relative text-gray-200">
-            {profileuserdata?.bio}
-          </pre>
-        )}
+        </div>
       </div>
-      <div className="w-full px-4 my-auto ">
+      
+      {profileuserdata?.username !== userdata?.username && (
         <button
-          onClick={() => {
-            profileuserdata?.username !== userdata?.username && handelfollow();
+          onClick={(e) => {
+            e.stopPropagation();
+            handelfollow();
           }}
-          className="bg-white w-24 hover:bg-slate-200 rounded-full text-sm shadow-lg ml-auto font-medium text-black
-     capitalize py-1 px-4 "
+          className={`px-4 h-8 rounded-full font-bold text-[15px] transition-colors flex-shrink-0 ${
+            isFollowing
+              ? "bg-transparent border border-border-default text-text-primary hover:bg-status-error/10 hover:border-status-error hover:text-status-error"
+              : "bg-text-primary text-bg-default hover:bg-text-secondary active:bg-text-tertiary"
+          }`}
         >
-          {userdata?.following?.includes(profileuserdata?.uid)
-            ? "following"
-            : "follow"}
+          {isFollowing ? "Following" : "Follow"}
         </button>
-      </div>
-    </section>
+      )}
+    </div>
   );
 }

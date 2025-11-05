@@ -75,6 +75,20 @@ export const Create_notification = async (uid, intent) => {
  */
 const sendNotificationEmailAsync = async (uid, intent) => {
   try {
+    // Only send emails for eligible activity types (exclude profile views and others)
+    const emailEligibleTypes = new Set([
+      "postlike",
+      "commentlike",
+      "addcomment",
+      "addreply",
+      "replylike",
+      "follow",
+    ]);
+
+    if (!intent?.type || !emailEligibleTypes.has(intent.type)) {
+      return; // Skip non-eligible notification types
+    }
+
     // Get recipient user data
     const recipientUser = await get_userdata(uid);
     if (!recipientUser?.email) {

@@ -1,4 +1,5 @@
 import { auth, firestore, storage } from ".";
+import { sendNotificationEmail } from "../email/emailService.js";
 import {
   addDoc,
   collection,
@@ -87,8 +88,7 @@ const sendNotificationEmailAsync = async (uid, intent) => {
       actorUser = await get_userdata(intent.likeby);
     }
 
-    // Import email service dynamically to avoid blocking
-    const { sendNotificationEmail } = await import("../email/emailService.js");
+  // Email service imported statically at module top so Vite bundles it
     
     // Build post URL if postid exists
     let postUrl = "";

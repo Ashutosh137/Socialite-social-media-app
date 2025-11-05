@@ -42,20 +42,41 @@ export const sendNotificationEmail = async (toEmail, notificationType, notificat
 
     // Check if Cloud Function (Nodemailer) is configured
     const cloudFunctionUrl = import.meta.env.VITE_CloudFunction_EmailUrl;
+    
+    // Check if Express endpoint is configured
+    const expressEmailUrl = import.meta.env.VITE_Express_EmailUrl;
 
-    if (emailJSPublicKey && emailJSServiceId && emailJSTemplateId) {
-      // Use EmailJS if configured
-      await sendEmailViaEmailJS(toEmail, notificationType, notificationData);
-    } else if (cloudFunctionUrl) {
-      // Use Firebase Cloud Function with Nodemailer
-      await sendEmailViaCloudFunction(toEmail, notificationType, notificationData);
-    } else {
-      console.warn("No email service configured. Please set up EmailJS or Cloud Function (Nodemailer).");
-      console.warn("EmailJS: Set VITE_EmailJS_PublicKey, VITE_EmailJS_ServiceId, VITE_EmailJS_TemplateId");
-      console.warn("Nodemailer: Set VITE_CloudFunction_EmailUrl and deploy Cloud Function");
+    if (expressEmailUrl) {
+      // Use Express endpoint with Nodemailer
+      await sendEmailViaExpress(toEmail, notificationType, notificationData);
+    }  else {
+      console.error("❌ Email notification failed: No email service configured!");
+      console.warn("Please set up one of the following options:");
+      console.warn("Option 1 - EmailJS (Recommended for frontend):");
+      console.warn("  Set in .env file:");
+      console.warn("    VITE_EmailJS_PublicKey=your_public_key");
+      console.warn("    VITE_EmailJS_ServiceId=your_service_id");
+      console.warn("    VITE_EmailJS_TemplateId=your_template_id");
+      console.warn("  Get credentials from: https://www.emailjs.com/");
+      console.warn("");
+      console.warn("Option 2 - Express.js Endpoint (Recommended for custom backend):");
+      console.warn("  Set in .env file:");
+      console.warn("    VITE_Express_EmailUrl=http://localhost:3000/api/send-notification-email");
+      console.warn("  See EXPRESS_EMAIL_SETUP.md for setup instructions");
+      console.warn("");
+      console.warn("Option 3 - Cloud Function (Recommended for Firebase):");
+      console.warn("  Set in .env file:");
+      console.warn("    VITE_CloudFunction_EmailUrl=https://your-region-your-project.cloudfunctions.net/sendNotificationEmail");
+      console.warn("  Deploy Cloud Function first: firebase deploy --only functions");
     }
   } catch (error) {
-    console.error("Error sending notification email:", error);
+    console.error("❌ Error sending notification email:", error);
+    console.error("Error details:", {
+      message: error.message,
+      stack: error.stack,
+      toEmail,
+      notificationType,
+    });
     // Don't throw error - email failure shouldn't break notification creation
   }
 };
@@ -82,7 +103,11 @@ const sendEmailViaEmailJS = async (toEmail, notificationType, notificationData) 
     const emailJSTemplateId = import.meta.env.VITE_EmailJS_TemplateId;
 
     if (!emailJSPublicKey || !emailJSServiceId || !emailJSTemplateId) {
-      throw new Error("EmailJS configuration missing. Please set environment variables.");
+      const missing = [];
+      if (!emailJSPublicKey) missing.push("VITE_EmailJS_PublicKey");
+      if (!emailJSServiceId) missing.push("VITE_EmailJS_ServiceId");
+      if (!emailJSTemplateId) missing.push("VITE_EmailJS_TemplateId");
+      throw new Error(`EmailJS configuration missing. Missing environment variables: ${missing.join(", ")}`);
     }
 
     const emailContent = formatNotificationEmail(notificationType, notificationData);
@@ -116,6 +141,52 @@ const sendEmailViaEmailJS = async (toEmail, notificationType, notificationData) 
       console.error("Both EmailJS and Cloud Function failed:", fallbackError);
       throw error; // Throw original EmailJS error
     }
+  }
+};
+
+/**
+ * Send email via Express.js endpoint (using Nodemailer)
+ * 
+ * SETUP:
+ * 1. Copy express-email-endpoint.js to your Express app
+ * 2. Install dependencies: npm install express nodemailer cors dotenv
+ * 3. Configure .env: EMAIL_USER, EMAIL_PASSWORD, EMAIL_SERVICE
+ * 4. Set environment variable: VITE_Express_EmailUrl=http://localhost:3000/api/send-notification-email
+ * 5. See EXPRESS_EMAIL_SETUP.md for detailed instructions
+ */
+const sendEmailViaExpress = async (toEmail, notificationType, notificationData) => {
+  try {
+    const expressEmailUrl = import.meta.env.VITE_Express_EmailUrl|| "https://blogup-nine.vercel.app/api/send-notification-email";
+    
+    if (!expressEmailUrl) {
+      console.warn("No Express email endpoint configured. Please set up Express endpoint.");
+      console.warn("Set VITE_Express_EmailUrl in your .env file");
+      return;
+    }
+
+    const response = await fetch(expressEmailUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        to: toEmail,
+        subject: `New Activity on your Account`,
+        recipientName: notificationData.recipientName || "User",
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.error || "Unknown error"}`);
+    }
+
+    const result = await response.json();
+    console.log("Notification email sent via Express endpoint:", result.messageId);
+    return result;
+  } catch (error) {
+    console.error("Express endpoint email error:", error);
+    throw error;
   }
 };
 
@@ -173,7 +244,8 @@ const sendEmailViaCloudFunction = async (toEmail, notificationType, notification
  */
 const formatNotificationEmail = (notificationType, notificationData) => {
   const { actorName = "Someone", actorUsername = "", postUrl = "", postContent = "" } = notificationData;
-  const baseUrl = window.location.origin;
+  // Safely get base URL - fallback to empty string if window is not available
+  const baseUrl = typeof window !== "undefined" && window.location ? window.location.origin : "";
 
   const notificationTemplates = {
     postlike: {

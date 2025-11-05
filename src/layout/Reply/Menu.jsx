@@ -3,7 +3,7 @@ import { Popupcenter } from "../../ui/Popupcenter";
 import { useNavigate } from "react-router-dom";
 import { useUserdatacontext } from "../../service/context/usercontext";
 
-function Menu({ setactive, comment, commentby }) {
+function Menu({ setactive, comment, commentby, delcomment, post }) {
   const navigate = useNavigate();
   const { userdata } = useUserdatacontext();
   return (
@@ -30,7 +30,7 @@ function Menu({ setactive, comment, commentby }) {
           Report
         </button>
         {(userdata?.username === commentby?.username ||
-          comment?.postedby === userdata?.uid) && (
+          post?.postedby === userdata?.uid) && (
           <button
             className="w-40 p-1  text-red-500 hover:bg-gray-950 "
             onClick={() => {

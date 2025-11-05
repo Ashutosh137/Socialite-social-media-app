@@ -69,7 +69,7 @@ function Menu({ setactive, profileuserdata }) {
         ) : (
           <>
             <button
-              className="w-40 capitalize  p-1   hover:bg-gray-950"
+              className="sm:w-40 capitalize  p-1   hover:bg-gray-950"
               onClick={() => {
                 navigate("/setting");
               }}

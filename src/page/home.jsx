@@ -91,7 +91,7 @@ export const Home = () => {
   }, [allpostdata, active, userdata]);
 
   const handleTabChange = (tab) => {
-    setpost([]);
+   
     setactive(tab);
   };
 
@@ -105,10 +105,10 @@ export const Home = () => {
       <div className="sticky top-0 z-20 bg-bg-default/80 backdrop-blur-xl border-b border-border-default">
        
         {/* Tabs */}
-        <div className="flex border-b border-border-default">
+        <div className="grid grid-cols-2 border-b border-border-default">
           <button
                 onClick={() => handleTabChange("")}
-            className={`flex-1 h-[53px] relative font-semibold text-[15px] transition-colors duration-200 ${
+            className={` h-[53px] relative font-semibold text-[15px] transition-colors duration-200 ${
                   active === ""
                     ? "text-text-primary"
                 : "text-text-secondary hover:text-text-primary hover:bg-bg-hover"
@@ -127,7 +127,7 @@ export const Home = () => {
               {auth?.currentUser && (
             <button
                   onClick={() => handleTabChange("follow")}
-              className={`flex-1 h-[53px] relative font-semibold text-[15px] transition-colors duration-200 ${
+              className={` h-[53px] relative font-semibold text-[15px] transition-colors duration-200 ${
                     active === "follow"
                       ? "text-text-primary"
                   : "text-text-secondary hover:text-text-primary hover:bg-bg-hover"
@@ -154,7 +154,7 @@ export const Home = () => {
 
         {/* Posts Feed */}
           {loading && (
-            <div className="flex items-center justify-center py-12">
+            <div className="flex w-full items-center justify-center py-12">
               <Loading />
             </div>
           )}

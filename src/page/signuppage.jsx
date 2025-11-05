@@ -21,7 +21,7 @@ const Signuppage = () => {
         <meta name="description" content="Sign up for Socialite" />
         <link rel="canonical" href="/" />
         <meta name="robots" content="index, follow" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+       
         <meta name="keywords" content="sign up, socialite, register" />
         <meta name="author" content="Socialite" />
         <meta name="language" content="EN" />

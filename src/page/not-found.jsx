@@ -9,7 +9,7 @@ function Notfound() {
         <meta name="description" content="login" />
         <link rel="canonical" href="/login" />
         <meta name="robots" content="index, follow" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+       
         <meta name="keywords" content="login" />
         <meta name="author" content="login" />
         <meta name="language" content="EN" />

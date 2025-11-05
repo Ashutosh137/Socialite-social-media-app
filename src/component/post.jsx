@@ -131,67 +131,82 @@ export const Post = ({ postdata, popup = true }) => {
 
   return (
     <article
-      className="py-3 border-border-default hover:bg-bg-hover/30 transition-colors duration-150 cursor-pointer"
+      className="relative border-b border-border-default/50 hover:bg-bg-hover/20 transition-all duration-200 ease-out overflow-hidden group"
       onClick={() => navigate(`/profile/${postedby?.username}/${post?.postid}`)}
     >
-      <div className="flex gap-3 px-4 py-3 w-full">
-        {/* Avatar */}
-        <Avatar
-          src={postedby?.profileImageURL}
-          alt={postedby?.name || "Profile"}
-          size="md"
-          fallback={defaultprofileimage}
-          onClick={(e) => {
-            e?.stopPropagation?.();
-            navigate(`/profile/${postedby?.username}`);
-          }}
-        />
+      {/* Post Container */}
+      <div className="flex gap-3 px-4 py-4 w-full max-w-full overflow-hidden">
+        {/* Avatar Section */}
+        <div className="flex-shrink-0">
+          <Avatar
+            src={postedby?.profileImageURL}
+            alt={postedby?.name || "Profile"}
+            size="md"
+            fallback={defaultprofileimage}
+            onClick={(e) => {
+              e?.stopPropagation?.();
+              navigate(`/profile/${postedby?.username}`);
+            }}
+          />
+        </div>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          {/* Header */}
-          <div className="flex items-start gap-2 mb-1">
+        {/* Content Section */}
+        <div className="flex-1 min-w-0 overflow-hidden">
+          {/* Header Section */}
+          <div className="flex items-start justify-between gap-3 mb-2">
             <div
               onClick={(e) => {
                 e.stopPropagation();
                 navigate(`/profile/${postedby?.username}`);
               }}
-              className="flex items-center gap-1 cursor-pointer group"
+              className="flex items-center gap-1.5 cursor-pointer group/header flex-wrap"
             >
               {postedby?.name ? (
                 <>
-                  <span className="font-bold text-[15px] text-text-primary hover:underline">
+                  <span className="font-semibold text-[15px] text-text-primary hover:underline transition-all duration-200 group-hover/header:text-accent-500">
                     {postedby.name}
                   </span>
-                  <span className="text-[15px] text-text-secondary">
+                  <span className="text-[15px] text-text-secondary truncate max-w-[120px] md:max-w-none">
                     @{postedby.username}
                   </span>
                   <span className="text-[15px] text-text-secondary">·</span>
-                  <span className="text-[15px] text-text-secondary hover:underline">
+                  <span className="text-[15px] text-text-secondary hover:underline transition-colors duration-200">
                     {Time(post?.postedat?.toJSON().seconds)}
                   </span>
                 </>
               ) : (
-                <Skeleton
-                  animation="wave"
-                  sx={{ bgcolor: "grey.900" }}
-                  variant="text"
-                  width={200}
-                  height={20}
-                />
+                <div className="flex items-center gap-2 w-full">
+                  <Skeleton
+                    animation="wave"
+                    sx={{ bgcolor: "grey.900" }}
+                    variant="text"
+                    width={120}
+                    height={16}
+                  />
+                  <Skeleton
+                    animation="wave"
+                    sx={{ bgcolor: "grey.900" }}
+                    variant="text"
+                    width={80}
+                    height={16}
+                  />
+                </div>
               )}
             </div>
 
+            {/* Menu Button */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 active === "menu" ? setactive("") : setactive("menu");
               }}
-              className="ml-auto p-2 rounded-full hover:bg-accent-500/10 text-text-secondary hover:text-accent-500 transition-colors"
+              className="flex-shrink-0 p-1.5 rounded-full hover:bg-accent-500/10 text-text-secondary hover:text-accent-500 transition-all duration-200 active:scale-95"
+              aria-label="Post options"
             >
               <MoreIcon className="text-xl" />
             </button>
             
+            {/* Post Menu */}
             {active === "menu" && (
               <PostMenu
                 post={post}
@@ -206,34 +221,51 @@ export const Post = ({ postdata, popup = true }) => {
 
           {/* Post Content */}
           {post?.content && (
-            <p
+            <div
               onClick={(e) => {
                 e.stopPropagation();
                 navigate(`/profile/${postedby?.username}/${post?.postid}`);
               }}
-              className="text-[15px] text-text-primary leading-5 mb-3 whitespace-pre-wrap break-words"
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                handleLike();
+              }}
+              className="mb-3 break-long-words max-w-full overflow-hidden"
             >
-              <Linkify>{post.content}</Linkify>
-            </p>
+              <p className="text-[15px] text-text-primary leading-[1.6] whitespace-pre-wrap break-long-words">
+                <Linkify 
+                  className="text-text-primary break-long-words"
+                  linkProps={{
+                    target: "_blank",
+                    rel: "noopener noreferrer",
+                    className: "text-accent-500 hover:text-accent-400 hover:underline transition-colors duration-200 break-words",
+                  }}
+                >
+                  {post.content}
+                </Linkify>
+              </p>
+            </div>
           )}
 
-          {/* Image */}
+          {/* Post Image */}
           {post?.img && (
             <div
               onClick={(e) => {
                 e.stopPropagation();
                 navigate(`/profile/${postedby?.username}/${post?.postid}`);
               }}
-              className="rounded-2xl overflow-hidden border border-border-default mb-3 cursor-pointer"
+              className="relative rounded-2xl overflow-hidden border border-border-default/50 mb-3 cursor-pointer group/image transition-all duration-300 hover:border-border-hover/50 hover:shadow-lg hover:shadow-black/20"
             >
               {loadingimg && (
-                <Skeleton
-                  animation="wave"
-                  sx={{ bgcolor: "grey.900", borderRadius: "1rem" }}
-                  variant="rectangular"
-                  width="100%"
-                  height={400}
-                />
+                <div className="w-full aspect-video bg-bg-tertiary animate-pulse flex items-center justify-center">
+                  <Skeleton
+                    animation="wave"
+                    sx={{ bgcolor: "grey.900", borderRadius: "1rem" }}
+                    variant="rectangular"
+                    width="100%"
+                    height="100%"
+                  />
+                </div>
               )}
               <img
                 onDoubleClick={(e) => {
@@ -244,14 +276,16 @@ export const Post = ({ postdata, popup = true }) => {
                 src={post.img}
                 className={`${
                   loadingimg ? "hidden" : "block"
-                } w-full max-h-[510px] object-cover`}
+                } w-full max-h-[600px] object-cover transition-transform duration-300 group-hover/image:scale-[1.02]`}
                 alt="Post"
+                loading="lazy"
               />
             </div>
           )}
 
-          {/* Actions */}
-          <div className="flex items-center justify-between max-w-[425px] mt-1">
+          {/* Actions Bar */}
+          <div className="flex items-center justify-between mt-3 max-w-[500px]">
+            {/* Comment Button */}
             <ActionButton
               icon={CommentIcon}
               label="Comment"
@@ -263,32 +297,49 @@ export const Post = ({ postdata, popup = true }) => {
               }}
             />
 
-            <ActionButton
-              icon={isLiked ? LikedIcon : LikeIcon}
-              label="Like"
-              variant="like"
-              count={post?.likes?.length || 0}
-              isActive={isLiked}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleLike();
-              }}
-            />
+            {/* Like Button with Count */}
+            <div className="flex items-center gap-1.5">
+              <ActionButton
+                icon={isLiked ? LikedIcon : LikeIcon}
+                label="Like"
+                variant="like"
+                isActive={isLiked}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleLike();
+                }}
+              />
+              {post?.likes?.length > 0 && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handelactive("like");
+                  }}
+                  className="text-[13px] font-medium text-text-secondary hover:text-social-like transition-colors duration-200 cursor-pointer min-w-[20px]"
+                >
+                  {post.likes.length}
+                </button>
+              )}
+            </div>
 
+            {/* Share Button */}
             <ActionButton
               icon={ShareIcon}
               label="Share"
               variant="share"
               onClick={(e) => {
                 e.stopPropagation();
-                navigator.share({
-                  title: `Check out this post by @${postedby?.username}`,
-                  text: post?.content,
-                  url: `${window.location.origin}/profile/${postedby?.username}/${post?.postid}`,
-                });
+                if (navigator.share) {
+                  navigator.share({
+                    title: `Check out this post by @${postedby?.username}`,
+                    text: post?.content?.substring(0, 100),
+                    url: `${window.location.origin}/profile/${postedby?.username}/${post?.postid}`,
+                  }).catch(() => {});
+                }
               }}
             />
 
+            {/* Bookmark Button */}
             <ActionButton
               icon={isBookmarked ? BookmarkedIcon : BookmarkIcon}
               label="Bookmark"
@@ -300,17 +351,20 @@ export const Post = ({ postdata, popup = true }) => {
               }}
             />
 
-            <ActionButton
-              icon={ViewsIcon}
-              label="Views"
-              variant="default"
-              count={post?.views > 0 ? formatNumber(post.views) : ""}
-              onClick={(e) => e.stopPropagation()}
-            />
+            {/* Views Counter */}
+            {post?.views > 0 && (
+              <div className="flex items-center gap-1.5 text-text-secondary">
+                <ViewsIcon className="text-lg" />
+                <span className="text-[13px] font-medium">
+                  {formatNumber(post.views)}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
+      {/* Modals and Popups */}
       {active === "like" && <LikePost post={post} setactive={setactive} />}
       {active === "delete" && (
         <DeletePost
@@ -321,19 +375,16 @@ export const Post = ({ postdata, popup = true }) => {
       )}
       {active === "report" && <Report setactive={setactive} />}
 
-      {popup && (
-        <>
-          {active === "comment" && (
-            <Popupitem
-              closefunction={() => {
-                setactive("");
-              }}
-            >
-              <Post postdata={post} popup={false} />
-              <Addcomment cuupost={post} cuusetpost={setpost} />
-            </Popupitem>
-          )}
-        </>
+      {/* Comment Popup */}
+      {popup && active === "comment" && (
+        <Popupitem
+          closefunction={() => {
+            setactive("");
+          }}
+        >
+          <Post postdata={post} popup={false} />
+          <Addcomment cuupost={post} cuusetpost={setpost} />
+        </Popupitem>
       )}
     </article>
   );

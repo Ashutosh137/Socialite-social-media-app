@@ -11,7 +11,7 @@ export const Layout = ({ Component, suggetion = true }) => {
       <div className="flex-1 flex min-h-screen ">
         {/* Main Content */}
         <main className="flex-1 flex justify-center min-h-screen border-x border-border-default">
-          <div className="w-full max-w-[600px] mt-10">
+          <div className="w-full max-w-[600px] pt-8 md:pt-0 mt-10">
             <Component />
           </div>
         </main>

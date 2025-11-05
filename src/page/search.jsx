@@ -11,7 +11,7 @@ export default function Search() {
         <meta name="description" content="Explore" />
         <link rel="canonical" href="/Explore" />
         <meta name="robots" content="index, follow" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+       
         <meta name="keywords" content="Explore" />
         <meta name="author" content="Explore" />
         <meta name="language" content="EN" />

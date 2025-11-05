@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom utilities for post content */
+@layer utilities {
+  .break-long-words {
+    /* Fallback for older browsers */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    /* For very long strings without spaces - breaks anywhere if needed */
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
+
 /* Premium Global Styles */
 @layer base {
   * {

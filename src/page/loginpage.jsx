@@ -20,7 +20,7 @@ export const Loginpage = () => {
         <meta name="description" content="Login to Socialite" />
         <link rel="canonical" href="/login" />
         <meta name="robots" content="index, follow" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+       
         <meta name="keywords" content="login, socialite" />
         <meta name="author" content="Socialite" />
         <meta name="language" content="EN" />
